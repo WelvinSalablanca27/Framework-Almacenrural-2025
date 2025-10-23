@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 //Importar componente Encabezado.
-import Encabezado from "./componentes/navegacion/Encabezado";
+import Encabezado from "./components/navegacion/Encabezado";
 
 //Importar las vistas.
 import Inicio from "./views/Inicio";
@@ -9,8 +9,10 @@ import Usuario from "./views/Usuario";
 import Cliente from "./views/Cliente";
 import Venta from "./views/Venta";
 import Compra from "./views/Compra";
-import Producto from "./views/Producto";
+
 import Proveedor from "./views/Proveedor";
+import Producto from "./views/Producto";
+
 
 //Importar archivo de estilos.
 import "./App.css";
