@@ -1,6 +1,7 @@
 import React from "react";
 import { Pagination, Row, Col } from "react-bootstrap";
 
+
 const Paginacion = ({
   elementosPorPagina,
   totalElementos,
