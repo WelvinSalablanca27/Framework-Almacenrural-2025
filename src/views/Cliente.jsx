@@ -5,7 +5,7 @@ import TablaClientes from '../components/clientes/TablaClientes';
 import ModalRegistroCliente from '../components/clientes/ModalRegistroCliente';
 import ModalEdicionCliente from '../components/clientes/ModalEdicionCliente';
 import ModalEliminacionCliente from '../components/clientes/ModalEliminacionCliente';
-
+import CuadroBusquedas from "../components/busquedas/CuadroBusquedas";
 
 const Cliente = () => {
     const [clientes, setClientes] = useState([]);
