@@ -91,13 +91,13 @@ const Cliente = () => {
 
             // Limpiar y cerrar
             setNuevoCliente({
-               Nombre1: "",
-        Nombre2: "",
-        Apellido1: "",
-        Apellido2: "",
-        Direccion: "",
-        Telefono: ""
-    });
+                Nombre1: "",
+                Nombre2: "",
+                Apellido1: "",
+                Apellido2: "",
+                Direccion: "",
+                Telefono: ""
+            });
             setMostrarModal(false);
             await obtenerClientes(); // Refresca la lista
         } catch (error) {
