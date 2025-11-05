@@ -22,12 +22,22 @@ const Cliente = () => {
         Direccion: "",
         Telefono: ""
     });
+    const [paginaActual, establecerPaginaActual] = useState(1);
+    const elementosPorPagina = 5; // Número de productos por pági
+
 
     const [mostrarModalEdicion, setMostrarModalEdicion] = useState(false);
     const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false);
 
     const [clienteEditada, setClienteEditada] = useState(null);
     const [clienteAEliminar, setClienteAEliminar] = useState(null);
+
+    // Calcular cliente paginadas
+    const clientePaginadas = clientesFiltrados.slice(
+        (paginaActual - 1) * elementosPorPagina,
+        paginaActual * elementosPorPagina
+    );
+
 
     const abrirModalEdicion = (clientes) => {
         setClienteEditada({ ...clientes });
@@ -161,11 +171,16 @@ const Cliente = () => {
 
                 </Row>
                 <TablaClientes
-                    clientes={clientesFiltrados}
+                    clientes={clientePaginadas}
                     cargando={cargando}
                     abrirModalEdicion={abrirModalEdicion}
                     abrirModalEliminacion={abrirModalEliminacion}
+                    totalElementos={clientes.length} // Total de clientes
+                    elementosPorPagina={elementosPorPagina} // Elementos por página
+                    paginaActual={paginaActual} // Página actual
+                    establecerPaginaActual={establecerPaginaActual} // Método para cambiar página
                 />
+
 
                 <ModalRegistroCliente
                     mostrarModal={mostrarModal}
