@@ -5,7 +5,6 @@ import TablaClientes from '../components/clientes/TablaClientes';
 import ModalRegistroCliente from '../components/clientes/ModalRegistroCliente';
 import ModalEdicionCliente from '../components/clientes/ModalEdicionCliente';
 import ModalEliminacionCliente from '../components/clientes/ModalEliminacionCliente';
-import CuadroBusquedas from "../components/busquedas/CuadroBusquedas";
 
 const Cliente = () => {
     const [clientes, setClientes] = useState([]);
@@ -36,9 +35,9 @@ const Cliente = () => {
     };
 
     const guardarEdicion = async () => {
-        if (!clienteEditada.primer_nombre.trim()) return;
+        if (!clienteEditada.Nombre1.trim()) return;
         try {
-            const respuesta = await fetch(`http://localhost:3001/api/actualizarCliente/${clienteEditada.id_cliente}`, {
+            const respuesta = await fetch(`http://localhost:3001/api/actualizarCliente/${clienteEditada.id_Cliente}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(clienteEditada)
@@ -59,7 +58,7 @@ const Cliente = () => {
 
     const confirmarEliminacion = async () => {
         try {
-            const respuesta = await fetch(`http://localhost:3001/api/eliminarCliente/${clienteAEliminar.id_cliente}`, {
+            const respuesta = await fetch(`http://localhost:3001/api/eliminarCliente/${clienteAEliminar.id_Cliente}`, {
                 method: 'DELETE',
             });
             if (!respuesta.ok) throw new Error('Error al eliminar');
@@ -77,7 +76,7 @@ const Cliente = () => {
     };
 
     const agregarCliente = async () => {
-        if (!nuevoCliente.primer_nombre.trim()) return;
+        if (!nuevoCliente.Nombre1.trim()) return;
 
         try {
             const respuesta = await fetch("http://localhost:3001/api/registrarCliente", {

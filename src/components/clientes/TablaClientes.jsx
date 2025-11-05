@@ -71,15 +71,14 @@ const TablaClientes = ({ clientes, cargando, abrirModalEdicion, abrirModalElimin
                 </thead>
                 <tbody>
                     {clientesOrdenadas.map((cliente) => (
-                        <tr key={cliente.id_cliente}>
-                            <td>{cliente.id_cliente}</td>
-                            <td>{cliente.primer_nombre}</td>
-                            <td>{cliente.segundo_nombre}</td>
-                            <td>{cliente.primer_apellido}</td>
-                            <td>{cliente.segundo_apellido}</td>
-                            <td>{cliente.celular}</td>
-                            <td>{cliente.direccion}</td>
-                            <td>{cliente.cedula}</td>
+                        <tr key={cliente.id_Cliente}>
+                            <td>{cliente.id_Cliente}</td>
+                            <td>{cliente.Nombre1}</td>
+                            <td>{cliente.Nombre2}</td>
+                            <td>{cliente.Apellido1}</td>
+                            <td>{cliente.Apellido2}</td>
+                            <td>{cliente.Direccion}</td>
+                            <td>{cliente.Telefono}</td>
                             <td>
                                 <td>
                                     <Button
