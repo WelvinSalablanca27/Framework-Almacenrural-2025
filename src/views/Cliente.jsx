@@ -16,13 +16,12 @@ const Cliente = () => {
 
     const [mostrarModal, setMostrarModal] = useState(false);
     const [nuevoCliente, setNuevoCliente] = useState({
-        primer_nombre: "",
-        segundo_nombre: "",
-        primer_apellido: "",
-        segundo_apellido: "",
-        celular: "",
-        direccion: "",
-        cedula: ""
+        Nombre1: "",
+        Nombre2: "",
+        Apellido1: "",
+        Apellido2: "",
+        Direccion: "",
+        Telefono: ""
     });
 
     const [mostrarModalEdicion, setMostrarModalEdicion] = useState(false);
@@ -92,14 +91,13 @@ const Cliente = () => {
 
             // Limpiar y cerrar
             setNuevoCliente({
-                primer_nombre: "",
-                segundo_nombre: "",
-                primer_apellido: "",
-                segundo_apellido: "",
-                celular: "",
-                direccion: "",
-                cedula: ""
-            });
+               Nombre1: "",
+        Nombre2: "",
+        Apellido1: "",
+        Apellido2: "",
+        Direccion: "",
+        Telefono: ""
+    });
             setMostrarModal(false);
             await obtenerClientes(); // Refresca la lista
         } catch (error) {
