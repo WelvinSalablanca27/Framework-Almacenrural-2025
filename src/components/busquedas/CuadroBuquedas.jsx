@@ -12,6 +12,7 @@ const CuadroBusquedas = ({ textoBusqueda, manejarCambioBusqueda }) => {
                 placeholder="Buscar..."
                 value={textoBusqueda}
                 onChange={manejarCambioBusqueda}
+                style={{ textTransform: "capitalize" }}
             />
         </InputGroup>
     );

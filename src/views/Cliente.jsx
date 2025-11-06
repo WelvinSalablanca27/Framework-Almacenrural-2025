@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Container, Col, Row, Button } from 'react-bootstrap';
-import CuadroBusquedas from "../components/busquedas/CuadroBusquedas";
+import CuadroBusquedas from "../components/busquedas/CuadroBuquedas";
 import TablaClientes from '../components/clientes/TablaClientes';
 import ModalRegistroCliente from '../components/clientes/ModalRegistroCliente';
 import ModalEdicionCliente from '../components/clientes/ModalEdicionCliente';
@@ -139,8 +139,8 @@ const Cliente = () => {
 
         const filtrados = clientes.filter(
             (clientes) =>
-                clientes.primer_nombre.toLowerCase().includes(texto) ||
-                clientes.id_cliente.toString().includes(texto)
+                clientes.Nombre1.toLowerCase().includes(texto) ||
+                clientes.id_Cliente.toString().includes(texto)
 
         );
         setClientesFiltrados(filtrados);
