@@ -64,20 +64,20 @@ const ModalRegistroCliente = ({
             />
           </Form.Group>
           <Form.Group className="mb-3" controlId="Direccion">
-            <Form.Label>Telefono del Cliente</Form.Label>
+            <Form.Label>Direccion</Form.Label>
             <Form.Control
               type="text"
-              name="celulaDireccionr"
+              name="Direccion"
               value={nuevoCliente.Direccion}
               onChange={manejarCambioInput}
               placeholder="Descripción opcional (máx. 100 caracteres)"
-              maxLength={8}
+              maxLength={150}
               required
             />
           </Form.Group>
 
           <Form.Group className="mb-3" controlId="Telefono">
-            <Form.Label>Dirección</Form.Label>
+            <Form.Label>Telefono del Cliente</Form.Label>
             <Form.Control
               as="textarea"
               rows={3}
@@ -85,7 +85,7 @@ const ModalRegistroCliente = ({
               value={nuevoCliente.Telefono}
               onChange={manejarCambioInput}
               placeholder="Ej: 8538****"
-              maxLength={150}
+              maxLength={8}
             />
           </Form.Group>
         </Form>
