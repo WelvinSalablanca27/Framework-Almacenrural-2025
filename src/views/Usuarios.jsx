@@ -51,7 +51,7 @@ const Usuario = () => {
 
   const guardarEdicion = async () => {
     try {
-      const respuesta = await fetch(`http://localhost:3001/api/actualizarUsuarioPatch/${usuarioEditado.id}`, {
+      const respuesta = await fetch(`http://localhost:3000/api/actualizarUsuarioPatch/${usuarioEditado.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(usuarioEditado)
@@ -72,7 +72,7 @@ const Usuario = () => {
 
   const confirmarEliminacion = async () => {
     try {
-      const respuesta = await fetch(`http://localhost:3001/api/eliminarUsuario/${usuarioAEliminar.id}`, {
+      const respuesta = await fetch(`http://localhost:3000/api/eliminarUsuario/${usuarioAEliminar.id}`, {
         method: 'DELETE',
       });
       if (!respuesta.ok) throw new Error('Error al eliminar');
@@ -94,7 +94,7 @@ const Usuario = () => {
     if (!nuevoUsuario.nombre.trim()) return;
 
     try {
-      const respuesta = await fetch("http://localhost:3001/api/registrarUsuario", {
+      const respuesta = await fetch("http://localhost:3000/api/registrarUsuario", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(nuevoUsuario),
@@ -121,7 +121,7 @@ const Usuario = () => {
 
   const obtenerUsuarios = async () => {
     try {
-      const respuesta = await fetch("http://localhost:3001/api/usuarios");
+      const respuesta = await fetch("http://localhost:3000/api/usuarios");
       if (!respuesta.ok) throw new Error("Error al obtener los usuarios");
       const datos = await respuesta.json();
       setUsuarios(datos);
