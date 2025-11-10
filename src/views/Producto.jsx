@@ -1,16 +1,18 @@
+// src/pages/Producto.jsx
 import { useEffect, useState } from "react";
-import { Container, Col, Row, Button } from 'react-bootstrap';
-import CuadroBusquedas from "../components/busquedas/CuadroBusquedas";
+import { Container, Col, Row, Button } from "react-bootstrap";
 import TablaProductos from "../components/Producto/TablaProducto";
+import CuadroBusquedas from "../components/busquedas/CuadroBusquedas";
 import ModalRegistroProducto from "../components/Producto/ModalRegistroProducto";
-import ModalEdicionProducto from "../components/Producto/MOdalEdicionProducto";
+import ModalEdicionProducto from "../components/Producto/ModalEdicionProducto";
 import ModalEliminacionProducto from "../components/Producto/ModalEliminacionProducto";
+
+const fondoalmacenrural = "https://i.pinimg.com/736x/76/fb/4a/76fb4a687980c6b31824bc0752d66f10.jpg";
 
 const Producto = () => {
   const [productos, setProductos] = useState([]);
-  const [cargando, setCargando] = useState(true);
-
   const [productosFiltrados, setProductosFiltrados] = useState([]);
+  const [cargando, setCargando] = useState(true);
   const [textoBusqueda, setTextoBusqueda] = useState("");
 
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -23,60 +25,42 @@ const Producto = () => {
     Fe_caducidad: ""
   });
 
-  const [paginaActual, establecerPaginaActual] = useState(1);
-  const elementosPorPagina = 13;
-
   const [mostrarModalEdicion, setMostrarModalEdicion] = useState(false);
-  const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false);
-
   const [productoEditado, setProductoEditado] = useState(null);
-  const [productoAEliminar, setProductoAEliminar] = useState(null);
 
-  const productosPaginados = productosFiltrados.slice(
-    (paginaActual - 1) * elementosPorPagina,
-    paginaActual * elementosPorPagina
-  );
+  const [mostrarModalEliminacion, setMostrarModalEliminacion] = useState(false);
+  const [productoAEliminado, setProductoAEliminado] = useState(null);
 
-  const abrirModalEdicion = (producto) => {
-    setProductoEditado({ ...producto });
-    setMostrarModalEdicion(true);
-  };
+  // NUEVO: Estado para minimizar el panel
+  const [minimizado, setMinimizado] = useState(false);
 
-  const guardarEdicion = async () => {
-    if (!productoEditado.Nombre_Prod.trim()) return;
+  const obtenerProductos = async () => {
     try {
-      const respuesta = await fetch(`http://localhost:3000/api/actualizarProductoPatch/${productoEditado.id_Producto}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(productoEditado)
-      });
-      if (!respuesta.ok) throw new Error('Error al actualizar');
-      setMostrarModalEdicion(false);
-      await obtenerProductos();
+      const respuesta = await fetch("http://localhost:3001/api/productos");
+      if (!respuesta.ok) throw new Error("Error al obtener productos");
+      const datos = await respuesta.json();
+      setProductos(datos);
+      setProductosFiltrados(datos);
+      setCargando(false);
     } catch (error) {
-      console.error("Error al editar producto:", error);
-      alert("No se pudo actualizar el producto.");
+      console.error(error.message);
+      setCargando(false);
     }
   };
 
-  const abrirModalEliminacion = (producto) => {
-    setProductoAEliminar(producto);
-    setMostrarModalEliminar(true);
-  };
+  useEffect(() => {
+    obtenerProductos();
+  }, []);
 
-  const confirmarEliminacion = async () => {
-    try {
-      const respuesta = await fetch(`http://localhost:3000/api/eliminarProducto/${productoAEliminar.id_Producto}`, {
-        method: 'DELETE',
-      });
-      if (!respuesta.ok) throw new Error('Error al eliminar');
-      setMostrarModalEliminar(false);
-      setProductoAEliminar(null);
-      await obtenerProductos();
-    } catch (error) {
-      console.error("Error al eliminar producto:", error);
-      alert("No se pudo eliminar el producto.");
-    }
+  const manejarCambioBusqueda = (e) => {
+    const texto = e.target.value.toLowerCase();
+    setTextoBusqueda(texto);
+    const filtrados = productos.filter(
+      (p) =>
+        p.Nombre_Prod.toLowerCase().includes(texto) ||
+        p.id_Producto.toString().includes(texto)
+    );
+    setProductosFiltrados(filtrados);
   };
 
   const manejarCambioInput = (e) => {
@@ -86,14 +70,12 @@ const Producto = () => {
 
   const agregarProducto = async () => {
     if (!nuevoProducto.Nombre_Prod.trim()) return;
-
     try {
-      const respuesta = await fetch("http://localhost:3000/api/registrarProducto", {
+      const respuesta = await fetch("http://localhost:3001/api/registrarProducto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(nuevoProducto),
       });
-
       if (!respuesta.ok) throw new Error("Error al guardar");
 
       setNuevoProducto({
@@ -107,92 +89,182 @@ const Producto = () => {
       setMostrarModal(false);
       await obtenerProductos();
     } catch (error) {
-      console.error("Error al agregar el producto:", error);
+      console.error(error);
       alert("No se pudo guardar el producto.");
     }
   };
 
-  const obtenerProductos = async () => {
+  const abrirModalEdicion = (producto) => {
+    setProductoEditado({ ...producto });
+    setMostrarModalEdicion(true);
+  };
+
+  const guardarEdicion = async () => {
+    if (!productoEditado?.Nombre_Prod?.trim()) return;
     try {
-      const respuesta = await fetch("http://localhost:3000/api/productos");
-      if (!respuesta.ok) throw new Error("Error al obtener los productos");
-      const datos = await respuesta.json();
-      setProductos(datos);
-      setProductosFiltrados(datos);
-      setCargando(false);
+      const respuesta = await fetch(
+        `http://localhost:3001/api/actualizarProducto/${productoEditado.id_Producto}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(productoEditado),
+        }
+      );
+      if (!respuesta.ok) throw new Error("Error al actualizar");
+      setMostrarModalEdicion(false);
+      await obtenerProductos();
     } catch (error) {
-      console.log(error.message);
-      setCargando(false);
+      console.error(error);
+      alert("No se pudo actualizar el producto.");
     }
   };
 
-  const manejarCambioBusqueda = (e) => {
-    const texto = e.target.value.toLowerCase();
-    setTextoBusqueda(texto);
-
-    const filtrados = productos.filter(
-      (producto) =>
-        producto.Nombre_Prod.toLowerCase().includes(texto) ||
-        producto.id_Producto.toString().includes(texto)
-    );
-    setProductosFiltrados(filtrados);
+  const abrirModalEliminacion = (producto) => {
+    setProductoAEliminado(producto);
+    setMostrarModalEliminacion(true);
   };
 
-  useEffect(() => {
-    obtenerProductos();
-  }, []);
+  const confirmarEliminacion = async () => {
+    try {
+      const respuesta = await fetch(
+        `http://localhost:3001/api/eliminarProducto/${productoAEliminado.id_Producto}`,
+        { method: "DELETE" }
+      );
+      if (!respuesta.ok) throw new Error("Error al eliminar");
+      setMostrarModalEliminacion(false);
+      setProductoAEliminado(null);
+      await obtenerProductos();
+    } catch (error) {
+      console.error(error);
+      alert("No se pudo eliminar el producto.");
+    }
+  };
 
   return (
-    <Container className="mt-4">
-      <h4>Productos</h4>
-      <Row>
-        <Col lg={5} md={6} sm={8} xs={7}>
-          <CuadroBusquedas
-            textoBusqueda={textoBusqueda}
-            manejarCambioBusqueda={manejarCambioBusqueda}
-          />
-        </Col>
-        <Col className="text-end">
-          <Button className="color-boton-registro" onClick={() => setMostrarModal(true)}>
-            + Nuevo Producto
+    <div
+      style={{
+        backgroundImage: `url(${fondoalmacenrural})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+        minHeight: "100vh",
+        width: "100vw",
+        margin: 0,
+        padding: 0,
+        position: "fixed",
+        top: 0,
+        left: 0,
+        overflow: "auto",
+      }}
+    >
+      <Container
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "100vh", padding: "20px" }}
+      >
+        {/* NUEVO: Panel minimizable */}
+        <div
+          className="position-relative p-4 rounded-4 shadow-lg"
+          style={{
+            backgroundColor: "rgba(255, 255, 255, 0.67)",
+            maxWidth: "900px",
+            width: "100%",
+            border: "3px solid #28a745",
+            borderRadius: "20px",
+            backdropFilter: "blur(8px)",
+            transition: "all 0.4s ease",
+            transform: minimizado ? "scale(0)" : "scale(1)",
+            opacity: minimizado ? 0 : 1,
+            pointerEvents: minimizado ? "none" : "all",
+          }}
+        >
+          {/* Botón X para minimizar */}
+          <Button
+            variant="danger"
+            size="sm"
+            className="position-absolute top-0 end-0 m-2 fw-bold"
+            style={{ zIndex: 10, borderRadius: "50%", width: "36px", height: "36px" }}
+            onClick={() => setMinimizado(true)}
+          >
+            X
           </Button>
-        </Col>
-      </Row>
 
-      <TablaProductos
-        productos={productosPaginados}
-        cargando={cargando}
-        abrirModalEdicion={abrirModalEdicion}
-        abrirModalEliminacion={abrirModalEliminacion}
-        totalElementos={productos.length}
-        elementosPorPagina={elementosPorPagina}
-        paginaActual={paginaActual}
-        establecerPaginaActual={establecerPaginaActual}
-      />
+          <h4 className="text-center mb-4 fw-bold text-success">
+            Registro de Productos
+          </h4>
 
-      <ModalRegistroProducto
-        mostrarModal={mostrarModal}
-        setMostrarModal={setMostrarModal}
-        nuevoProducto={nuevoProducto}
-        manejarCambioInput={manejarCambioInput}
-        agregarProducto={agregarProducto}
-      />
+          <Row className="mb-3 align-items-center">
+            <Col lg={7} md={8} sm={12} className="mb-2 mb-md-0">
+              <CuadroBusquedas
+                textoBusqueda={textoBusqueda}
+                manejarCambioBusqueda={manejarCambioBusqueda}
+              />
+            </Col>
+            <Col className="text-end">
+              <Button
+                variant="success"
+                className="fw-bold px-4 shadow-sm"
+                onClick={() => setMostrarModal(true)}
+              >
+                + Nuevo
+              </Button>
+            </Col>
+          </Row>
 
-      <ModalEdicionProducto
-        mostrar={mostrarModalEdicion}
-        setMostrar={setMostrarModalEdicion}
-        productoEditado={productoEditado}
-        setProductoEditado={setProductoEditado}
-        guardarEdicion={guardarEdicion}
-      />
+          <div style={{ maxHeight: "60vh", overflowY: "auto", paddingRight: "8px" }}>
+            <TablaProductos
+              productos={productosFiltrados}
+              cargando={cargando}
+              abrirModalEdicion={abrirModalEdicion}
+              abrirModalEliminacion={abrirModalEliminacion}
+            />
+          </div>
 
-      <ModalEliminacionProducto
-        mostrar={mostrarModalEliminar}
-        setMostrar={setMostrarModalEliminar}
-        producto={productoAEliminar}
-        confirmarEliminacion={confirmarEliminacion}
-      />
-    </Container>
+
+          <ModalRegistroProducto
+            mostrarModal={mostrarModal}
+            setMostrarModal={setMostrarModal}
+            nuevoProducto={nuevoProducto}
+            setNuevoProducto={setNuevoProducto}
+            manejarCambioInput={manejarCambioInput}
+            agregarProducto={agregarProducto}
+          />
+
+          <ModalEdicionProducto
+            mostrar={mostrarModalEdicion}
+            setMostrar={setMostrarModalEdicion}
+            productoEditado={productoEditado}
+            setProductoEditado={setProductoEditado}
+            guardarEdicion={guardarEdicion}
+          />
+
+          <ModalEliminacionProducto
+            mostrar={mostrarModalEliminacion}
+            setMostrar={setMostrarModalEliminacion}
+            productoEliminado={productoAEliminado}
+            confirmarEliminacion={confirmarEliminacion}
+          />
+        </div>
+
+        {/* boton + para abrir pestaña de Producto */}
+        {minimizado && (
+          <Button
+            variant="success"
+            className="position-fixed bottom-0 end-0 m-4 shadow-lg"
+            style={{
+              zIndex: 1000,
+              borderRadius: "50%",
+              width: "60px",
+              height: "60px",
+              fontSize: "24px",
+            }}
+            onClick={() => setMinimizado(false)}
+          >
+            +
+          </Button>
+        )}
+      </Container>
+    </div>
   );
 };
 

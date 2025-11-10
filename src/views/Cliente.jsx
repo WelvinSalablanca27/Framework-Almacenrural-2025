@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Container, Col, Row, Button } from 'react-bootstrap';
-import CuadroBusquedas from "../components/busquedas/CuadroBuquedas";
+import CuadroBusquedas from "../components/busquedas/CuadroBusquedas";
 import TablaClientes from '../components/clientes/TablaClientes';
 import ModalRegistroCliente from '../components/clientes/ModalRegistroCliente';
 import ModalEdicionCliente from '../components/clientes/ModalEdicionCliente';

@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import { Container, Col, Row, Button } from 'react-bootstrap';
-import CuadroBusquedas from "../components/busquedas/CuadroBuquedas";
+import CuadroBusquedas from "../components/busquedas/CuadroBusquedas";
 import TablaUsuario from "../components/Usuarios/TablaUsuario";
 import ModalRegistroUsuario from "../components/Usuarios/ModalRegistroUsuario";
 import ModalEdicionUsuario from "../components/Usuarios/ModalEdicionUsuario";
 import ModalEliminacionUsuario from "../components/Usuarios/ModalEliminarUsuario";
+
+
+// FONDO COMPLETO: BODEGA DE FERRETERÍA (SIN BORDES, SIN RALLAS)
+const fondoFerreteria = "https://i.pinimg.com/736x/76/fb/4a/76fb4a687980c6b31824bc0752d66f10.jpg";
+
+
 
 const Usuario = () => {
   const [usuarios, setUsuarios] = useState([]);
