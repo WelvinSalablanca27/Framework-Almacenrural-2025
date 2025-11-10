@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
-import { Container, Col, Row, Button } from "react-bootstrap";
+import { Container, Button } from "react-bootstrap";
 import TablaProductos from "../components/Producto/TablaProducto";
 import CuadroBusquedas from "../components/busquedas/CuadroBusquedas";
 import ModalRegistroProducto from "../components/Producto/ModalRegistroProducto";
 import ModalEdicionProducto from "../components/Producto/ModalEdicionProducto";
 import ModalEliminacionProducto from "../components/Producto/ModalEliminacionProducto";
 
-const fondoalmacenrural = "https://i.pinimg.com/736x/76/fb/4a/76fb4a687980c6b31824bc0752d66f10.jpg";
+// Excel
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
+
+// Imagen de fondo
+const fondoAlmacenRural = "https://i.pinimg.com/736x/76/fb/4a/76fb4a687980c6b31824bc0752d66f10.jpg";
 
 const Producto = () => {
   const [productos, setProductos] = useState([]);
@@ -14,6 +19,7 @@ const Producto = () => {
   const [cargando, setCargando] = useState(true);
   const [textoBusqueda, setTextoBusqueda] = useState("");
 
+  // Estados CRUD
   const [mostrarModal, setMostrarModal] = useState(false);
   const [nuevoProducto, setNuevoProducto] = useState({
     Nombre_Prod: "",
@@ -21,23 +27,23 @@ const Producto = () => {
     Existencia_Prod: "",
     Precio_Costo: "",
     Precio_Venta: "",
-    Fe_caducidad: ""
+    Fe_caducidad: "",
   });
 
   const [mostrarModalEdicion, setMostrarModalEdicion] = useState(false);
   const [productoEditado, setProductoEditado] = useState(null);
 
   const [mostrarModalEliminacion, setMostrarModalEliminacion] = useState(false);
-  const [productoAEliminado, setProductoAEliminado] = useState(null);
-
-  // NUEVO: Estado para minimizar el panel
+  const [productoAEliminado, setProductoAEliminado] = useState(null)
   const [minimizado, setMinimizado] = useState(false);
+
+
 
   const obtenerProductos = async () => {
     try {
-      const respuesta = await fetch("http://localhost:3000/api/productos");
-      if (!respuesta.ok) throw new Error("Error al obtener productos");
-      const datos = await respuesta.json();
+      const res = await fetch("http://localhost:3001/api/productos");
+      if (!res.ok) throw new Error("Error al obtener productos");
+      const datos = await res.json();
       setProductos(datos);
       setProductosFiltrados(datos);
       setCargando(false);
@@ -51,9 +57,11 @@ const Producto = () => {
     obtenerProductos();
   }, []);
 
+  // Buscar productos
   const manejarCambioBusqueda = (e) => {
     const texto = e.target.value.toLowerCase();
     setTextoBusqueda(texto);
+
     const filtrados = productos.filter(
       (p) =>
         p.Nombre_Prod.toLowerCase().includes(texto) ||
@@ -62,20 +70,16 @@ const Producto = () => {
     setProductosFiltrados(filtrados);
   };
 
-  const manejarCambioInput = (e) => {
-    const { name, value } = e.target;
-    setNuevoProducto((prev) => ({ ...prev, [name]: value }));
-  };
-
+  // CRUD
   const agregarProducto = async () => {
     if (!nuevoProducto.Nombre_Prod.trim()) return;
     try {
-      const respuesta = await fetch("http://localhost:3000/api/registrarProducto", {
+      const res = await fetch("http://localhost:3001/api/registrarProducto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(nuevoProducto),
       });
-      if (!respuesta.ok) throw new Error("Error al guardar");
+      if (!res.ok) throw new Error("Error al guardar");
 
       setNuevoProducto({
         Nombre_Prod: "",
@@ -83,7 +87,7 @@ const Producto = () => {
         Existencia_Prod: "",
         Precio_Costo: "",
         Precio_Venta: "",
-        Fe_caducidad: ""
+        Fe_caducidad: "",
       });
       setMostrarModal(false);
       await obtenerProductos();
@@ -98,18 +102,20 @@ const Producto = () => {
     setMostrarModalEdicion(true);
   };
 
+
   const guardarEdicion = async () => {
     if (!productoEditado?.Nombre_Prod?.trim()) return;
     try {
-      const respuesta = await fetch(
-        `http://localhost:3000/api/actualizarProducto/${productoEditado.id_Producto}`,
+      const res = await fetch(
+        `http://localhost:3001/api/actualizarProducto/${productoEditado.id_Producto}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(productoEditado),
         }
       );
-      if (!respuesta.ok) throw new Error("Error al actualizar");
+      if (!res.ok) throw new Error("Error al actualizar");
+
       setMostrarModalEdicion(false);
       await obtenerProductos();
     } catch (error) {
@@ -118,18 +124,21 @@ const Producto = () => {
     }
   };
 
+
   const abrirModalEliminacion = (producto) => {
     setProductoAEliminado(producto);
     setMostrarModalEliminacion(true);
   };
 
+
   const confirmarEliminacion = async () => {
     try {
-      const respuesta = await fetch(
-        `http://localhost:3000/api/eliminarProducto/${productoAEliminado.id_Producto}`,
+      const res = await fetch(
+        `http://localhost:3001/api/eliminarProducto/${productoAEliminado.id_Producto}`,
         { method: "DELETE" }
       );
-      if (!respuesta.ok) throw new Error("Error al eliminar");
+      if (!res.ok) throw new Error("Error al eliminar");
+
       setMostrarModalEliminacion(false);
       setProductoAEliminado(null);
       await obtenerProductos();
@@ -139,10 +148,47 @@ const Producto = () => {
     }
   };
 
+
+  // Generar Excel
+
+  const generarReporteExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Productos");
+
+    sheet.columns = [
+      { header: "ID", key: "id", width: 10 },
+      { header: "Nombre", key: "nombre", width: 25 },
+      { header: "Tipo", key: "tipo", width: 20 },
+      { header: "Existencia", key: "existencia", width: 15 },
+      { header: "Precio Costo", key: "precio_costo", width: 15 },
+      { header: "Precio Venta", key: "precio_venta", width: 15 },
+      { header: "Fecha Caducidad", key: "fecha", width: 20 },
+    ];
+
+    productosFiltrados.forEach((p) => {
+      sheet.addRow({
+        id: p.id_Producto,
+        nombre: p.Nombre_Prod,
+        tipo: p.Tipo_Prod,
+        existencia: p.Existencia_Prod,
+        precio_costo: p.Precio_Costo,
+        precio_venta: p.Precio_Venta,
+        fecha: p.Fe_caducidad,
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/octet-stream" });
+    saveAs(blob, "reporte_productos.xlsx");
+  };
+
+
+  // Render
+
   return (
     <div
       style={{
-        backgroundImage: `url(${fondoalmacenrural})`,
+        backgroundImage: `url(${fondoAlmacenRural})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -161,7 +207,7 @@ const Producto = () => {
         className="d-flex justify-content-center align-items-center"
         style={{ minHeight: "100vh", padding: "20px" }}
       >
-        {/* NUEVO: Panel minimizable */}
+
         <div
           className="position-relative p-4 rounded-4 shadow-lg"
           style={{
@@ -176,30 +222,20 @@ const Producto = () => {
             opacity: minimizado ? 0 : 1,
             pointerEvents: minimizado ? "none" : "all",
           }}
-        >
-          {/* Botón X para minimizar */}
-          <Button
-            variant="danger"
-            size="sm"
-            className="position-absolute top-0 end-0 m-2 fw-bold"
-            style={{ zIndex: 10, borderRadius: "50%", width: "36px", height: "36px" }}
-            onClick={() => setMinimizado(true)}
-          >
-            X
-          </Button>
 
+        >
           <h4 className="text-center mb-4 fw-bold text-success">
             Registro de Productos
           </h4>
 
-          <Row className="mb-3 align-items-center">
-            <Col lg={7} md={8} sm={12} className="mb-2 mb-md-0">
+          <div className="row mb-3 align-items-center">
+            <div className="col-lg-7 col-md-8 col-sm-12 mb-2 mb-md-0">
               <CuadroBusquedas
                 textoBusqueda={textoBusqueda}
                 manejarCambioBusqueda={manejarCambioBusqueda}
               />
-            </Col>
-            <Col className="text-end">
+            </div>
+            <div className="col text-end">
               <Button
                 variant="success"
                 className="fw-bold px-4 shadow-sm"
@@ -207,10 +243,19 @@ const Producto = () => {
               >
                 + Nuevo
               </Button>
-            </Col>
-          </Row>
+              <Button
+                variant="info"
+                className="fw-bold px-4 shadow-sm ms-2 text-white"
+                onClick={generarReporteExcel}
+              >
+                📊 Reporte 
+              </Button>
+            </div>
+          </div>
 
-          <div style={{ maxHeight: "60vh", overflowY: "auto", paddingRight: "8px" }}>
+          <div
+            style={{ maxHeight: "60vh", overflowY: "auto", paddingRight: "8px" }}
+          >
             <TablaProductos
               productos={productosFiltrados}
               cargando={cargando}
@@ -225,10 +270,8 @@ const Producto = () => {
             setMostrarModal={setMostrarModal}
             nuevoProducto={nuevoProducto}
             setNuevoProducto={setNuevoProducto}
-            manejarCambioInput={manejarCambioInput}
             agregarProducto={agregarProducto}
           />
-
           <ModalEdicionProducto
             mostrar={mostrarModalEdicion}
             setMostrar={setMostrarModalEdicion}
@@ -245,23 +288,6 @@ const Producto = () => {
           />
         </div>
 
-        {/* boton + para abrir pestaña de Producto */}
-        {minimizado && (
-          <Button
-            variant="success"
-            className="position-fixed bottom-0 end-0 m-4 shadow-lg"
-            style={{
-              zIndex: 1000,
-              borderRadius: "50%",
-              width: "60px",
-              height: "60px",
-              fontSize: "24px",
-            }}
-            onClick={() => setMinimizado(false)}
-          >
-            +
-          </Button>
-        )}
       </Container>
     </div>
   );
