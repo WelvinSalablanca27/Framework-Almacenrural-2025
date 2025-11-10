@@ -36,7 +36,7 @@ const Producto = () => {
 
   const obtenerProductos = async () => {
     try {
-      const respuesta = await fetch("http://localhost:3001/api/productos");
+      const respuesta = await fetch("http://localhost:3000/api/productos");
       if (!respuesta.ok) throw new Error("Error al obtener productos");
       const datos = await respuesta.json();
       setProductos(datos);
@@ -71,7 +71,7 @@ const Producto = () => {
   const agregarProducto = async () => {
     if (!nuevoProducto.Nombre_Prod.trim()) return;
     try {
-      const respuesta = await fetch("http://localhost:3001/api/registrarProducto", {
+      const respuesta = await fetch("http://localhost:3000/api/registrarProducto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(nuevoProducto),
@@ -103,7 +103,7 @@ const Producto = () => {
     if (!productoEditado?.Nombre_Prod?.trim()) return;
     try {
       const respuesta = await fetch(
-        `http://localhost:3001/api/actualizarProducto/${productoEditado.id_Producto}`,
+        `http://localhost:3000/api/actualizarProducto/${productoEditado.id_Producto}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -127,7 +127,7 @@ const Producto = () => {
   const confirmarEliminacion = async () => {
     try {
       const respuesta = await fetch(
-        `http://localhost:3001/api/eliminarProducto/${productoAEliminado.id_Producto}`,
+        `http://localhost:3000/api/eliminarProducto/${productoAEliminado.id_Producto}`,
         { method: "DELETE" }
       );
       if (!respuesta.ok) throw new Error("Error al eliminar");

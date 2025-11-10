@@ -8,7 +8,7 @@ const Proveedor = () => {
 
     const obtenerProveedores = async () => {
         try {
-            const respuesta = await fetch("http://localhost:3001/api/proveedor");
+            const respuesta = await fetch("http://localhost:3000/api/proveedor");
             
             if (!respuesta.ok) throw new Error("Error al obtener los proveedores");
 
