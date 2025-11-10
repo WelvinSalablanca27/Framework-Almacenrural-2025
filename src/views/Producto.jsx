@@ -1,4 +1,3 @@
-// src/pages/Producto.jsx
 import { useEffect, useState } from "react";
 import { Container, Col, Row, Button } from "react-bootstrap";
 import TablaProductos from "../components/Producto/TablaProducto";
