@@ -1,4 +1,3 @@
-// src/components/Producto/TablaProducto.jsx
 import { useState } from "react";
 import { Table, Spinner, Button, Card } from "react-bootstrap";
 import { useMediaQuery } from "react-responsive";
@@ -42,7 +41,7 @@ const TablaProducto = ({
   const inicio = (paginaActual - 1) * elementosPorPagina;
   const productosPaginados = productosOrdenados.slice(inicio, inicio + elementosPorPagina);
 
-  // FORMATOS NICARAGUA
+  
   const formatearFecha = (f) => new Date(f).toLocaleDateString("es-NI");
   const formatearMoneda = (v) => `C$${Number(v).toFixed(2)}`;
 
@@ -59,7 +58,7 @@ const TablaProducto = ({
     return <p className="text-center text-muted">No hay productos registrados.</p>;
   }
 
-  // VISTA MÓVIL: TARJETAS PERFECTAS
+  // VISTA MÓVIL
   if (isMobile) {
     return (
       <div>
@@ -67,7 +66,7 @@ const TablaProducto = ({
           Lista de Productos
         </h5>
 
-        {/* Selector de orden en móvil */}
+
         <div className="mb-3">
           <select
             className="form-select form-select-sm shadow-sm"
@@ -83,12 +82,13 @@ const TablaProducto = ({
             <option value="Nombre_Prod-asc">Nombre (A → Z)</option>
             <option value="Nombre_Prod-desc">Nombre (Z → A)</option>
             <option value="Existencia_Prod-desc">Existencia (más stock)</option>
+            <option value="stock-desc">Stock (más)</option>
             <option value="Precio_Venta-desc">Precio Venta (más caro)</option>
             <option value="Fe_caducidad-asc">Caducidad (próxima)</option>
           </select>
         </div>
 
-        {/* Tarjetas */}
+
         <div className="d-flex flex-column gap-3">
           {productosPaginados.map((p) => (
             <Card
@@ -128,6 +128,10 @@ const TablaProducto = ({
                     <span className="fw-bold text-primary">{p.Existencia_Prod}</span>
                   </div>
                   <div className="d-flex justify-content-between mb-1">
+                    <span className="text-muted">Stock:</span>
+                    <span className="fw-bold text-primary">{p.stock}</span>
+                  </div>
+                  <div className="d-flex justify-content-between mb-1">
                     <span className="text-muted">Costo:</span>
                     <span className="fw-bold text-success">{formatearMoneda(p.Precio_Costo)}</span>
                   </div>
@@ -145,7 +149,7 @@ const TablaProducto = ({
           ))}
         </div>
 
-        {/* Paginación móvil */}
+
         <div className="mt-4">
           <Paginacion
             elementosPorPagina={elementosPorPagina}
@@ -158,7 +162,7 @@ const TablaProducto = ({
     );
   }
 
-  // VISTA ESCRITORIO: TABLA CLÁSICA
+  // VISTA ESCRITORIO
   return (
     <div>
       <h5 className="mb-3 text-center text-success fw-bold">
@@ -169,27 +173,14 @@ const TablaProducto = ({
         <Table striped bordered hover className="table-sm text-center align-middle">
           <thead className="table-success text-white">
             <tr>
-              <BotonOrden campo="id_Producto" orden={orden} manejarOrden={manejarOrden}>
-                ID
-              </BotonOrden>
-              <BotonOrden campo="Nombre_Prod" orden={orden} manejarOrden={manejarOrden}>
-                Nombre
-              </BotonOrden>
-              <BotonOrden campo="Tipo_Prod" orden={orden} manejarOrden={manejarOrden}>
-                Tipo
-              </BotonOrden>
-              <BotonOrden campo="Existencia_Prod" orden={orden} manejarOrden={manejarOrden}>
-                Existencia
-              </BotonOrden>
-              <BotonOrden campo="Precio_Costo" orden={orden} manejarOrden={manejarOrden}>
-                Precio Costo
-              </BotonOrden>
-              <BotonOrden campo="Precio_Venta" orden={orden} manejarOrden={manejarOrden}>
-                Precio Venta
-              </BotonOrden>
-              <BotonOrden campo="Fe_caducidad" orden={orden} manejarOrden={manejarOrden}>
-                Caducidad
-              </BotonOrden>
+              <BotonOrden campo="id_Producto" orden={orden} manejarOrden={manejarOrden}>ID</BotonOrden>
+              <BotonOrden campo="Nombre_Prod" orden={orden} manejarOrden={manejarOrden}>Nombre</BotonOrden>
+              <BotonOrden campo="Tipo_Prod" orden={orden} manejarOrden={manejarOrden}>Tipo</BotonOrden>
+              <BotonOrden campo="Existencia_Prod" orden={orden} manejarOrden={manejarOrden}>Existencia</BotonOrden>
+              <BotonOrden campo="stock" orden={orden} manejarOrden={manejarOrden}>Stock</BotonOrden>
+              <BotonOrden campo="Precio_Costo" orden={orden} manejarOrden={manejarOrden}>Precio Costo</BotonOrden>
+              <BotonOrden campo="Precio_Venta" orden={orden} manejarOrden={manejarOrden}>Precio Venta</BotonOrden>
+              <BotonOrden campo="Fe_caducidad" orden={orden} manejarOrden={manejarOrden}>Caducidad</BotonOrden>
               <th className="bg-success text-white">Acciones</th>
             </tr>
           </thead>
@@ -200,17 +191,14 @@ const TablaProducto = ({
                 <td>{p.Nombre_Prod}</td>
                 <td>{p.Tipo_Prod}</td>
                 <td>{p.Existencia_Prod}</td>
+                <td>{p.stock}</td>
                 <td>{formatearMoneda(p.Precio_Costo)}</td>
                 <td>{formatearMoneda(p.Precio_Venta)}</td>
                 <td>{formatearFecha(p.Fe_caducidad)}</td>
                 <td>
                   <div className="d-flex gap-1 justify-content-center">
-                    <Button size="sm" variant="warning" onClick={() => abrirModalEdicion(p)}>
-                      Editar
-                    </Button>
-                    <Button size="sm" variant="danger" onClick={() => abrirModalEliminacion(p)}>
-                      Eliminar
-                    </Button>
+                    <Button size="sm" variant="warning" onClick={() => abrirModalEdicion(p)}>Editar</Button>
+                    <Button size="sm" variant="danger" onClick={() => abrirModalEliminacion(p)}>Eliminar</Button>
                   </div>
                 </td>
               </tr>

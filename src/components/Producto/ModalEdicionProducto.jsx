@@ -1,4 +1,3 @@
-// components/Producto/ModalEdicionProducto.jsx
 import { useState, useEffect } from "react";
 import { Modal, Button, Form } from "react-bootstrap";
 
@@ -85,6 +84,18 @@ const ModalEdicionProducto = ({
                 onChange={manejarCambio}
                 min="0"
                 step="0.01"
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Stock</Form.Label>
+              <Form.Control
+                type="number"
+                name="stock"
+                value={productoEditado.stock }
+                onChange={manejarCambio}
+                min="0"
+                step="1"
               />
             </Form.Group>
 

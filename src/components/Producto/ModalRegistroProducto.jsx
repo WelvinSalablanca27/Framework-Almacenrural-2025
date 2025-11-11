@@ -23,6 +23,7 @@ const ModalRegistroProducto = ({
       Nombre_Prod: "",
       Tipo_Prod: "",
       Existencia_Prod: "",
+      stock: "",
       Precio_Costo: "",
       Precio_Venta: "",
       Fe_caducidad: "",
@@ -100,6 +101,20 @@ const ModalRegistroProducto = ({
             </div>
 
             <div className="col-md-6 mb-3">
+              <Form.Label>Stock</Form.Label>
+              <Form.Control
+                type="number"
+                name="stock"
+                value={nuevoProducto.stock}
+                onChange={handleChange}
+                placeholder="0"
+                min="0"
+              />
+            </div>
+          </div>
+
+          <div className="row">
+            <div className="col-md-6 mb-3">
               <Form.Label>Fecha de Caducidad</Form.Label>
               <Form.Control
                 type="date"
@@ -108,9 +123,7 @@ const ModalRegistroProducto = ({
                 onChange={handleChange}
               />
             </div>
-          </div>
 
-          <div className="row">
             <div className="col-md-6 mb-3">
               <Form.Label>Precio Costo (C$)</Form.Label>
               <Form.Control
@@ -123,7 +136,9 @@ const ModalRegistroProducto = ({
                 placeholder="0.00"
               />
             </div>
+          </div>
 
+          <div className="row">
             <div className="col-md-6 mb-3">
               <Form.Label>Precio Venta (C$)</Form.Label>
               <Form.Control

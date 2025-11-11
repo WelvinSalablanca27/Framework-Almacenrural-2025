@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Container, Button } from "react-bootstrap";
+import { Container, Col, Row, Button } from "react-bootstrap";
 import TablaProductos from "../components/Producto/TablaProducto";
 import CuadroBusquedas from "../components/busquedas/CuadroBusquedas";
 import ModalRegistroProducto from "../components/Producto/ModalRegistroProducto";
@@ -10,8 +10,8 @@ import ModalEliminacionProducto from "../components/Producto/ModalEliminacionPro
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
-// Imagen de fondo
-const fondoAlmacenRural = "https://i.pinimg.com/736x/76/fb/4a/76fb4a687980c6b31824bc0752d66f10.jpg";
+const fondoalmacenrural =
+  "https://i.pinimg.com/736x/76/fb/4a/76fb4a687980c6b31824bc0752d66f10.jpg";
 
 const Producto = () => {
   const [productos, setProductos] = useState([]);
@@ -19,12 +19,13 @@ const Producto = () => {
   const [cargando, setCargando] = useState(true);
   const [textoBusqueda, setTextoBusqueda] = useState("");
 
-  // Estados CRUD
+
   const [mostrarModal, setMostrarModal] = useState(false);
   const [nuevoProducto, setNuevoProducto] = useState({
     Nombre_Prod: "",
     Tipo_Prod: "",
     Existencia_Prod: "",
+    stock: "",
     Precio_Costo: "",
     Precio_Venta: "",
     Fe_caducidad: "",
@@ -34,16 +35,18 @@ const Producto = () => {
   const [productoEditado, setProductoEditado] = useState(null);
 
   const [mostrarModalEliminacion, setMostrarModalEliminacion] = useState(false);
-  const [productoAEliminado, setProductoAEliminado] = useState(null)
+  const [productoAEliminado, setProductoAEliminado] = useState(null);
+
   const [minimizado, setMinimizado] = useState(false);
 
-
-
+  // -----------------------------
+  // CRUD
+  // -----------------------------
   const obtenerProductos = async () => {
     try {
-      const res = await fetch("http://localhost:3001/api/productos");
-      if (!res.ok) throw new Error("Error al obtener productos");
-      const datos = await res.json();
+      const respuesta = await fetch("http://localhost:3001/api/productos");
+      if (!respuesta.ok) throw new Error("Error al obtener productos");
+      const datos = await respuesta.json();
       setProductos(datos);
       setProductosFiltrados(datos);
       setCargando(false);
@@ -57,7 +60,7 @@ const Producto = () => {
     obtenerProductos();
   }, []);
 
-  // Buscar productos
+
   const manejarCambioBusqueda = (e) => {
     const texto = e.target.value.toLowerCase();
     setTextoBusqueda(texto);
@@ -70,21 +73,26 @@ const Producto = () => {
     setProductosFiltrados(filtrados);
   };
 
-  // CRUD
+  const manejarCambioInput = (e) => {
+    const { name, value } = e.target;
+    setNuevoProducto((prev) => ({ ...prev, [name]: value }));
+  };
+
   const agregarProducto = async () => {
     if (!nuevoProducto.Nombre_Prod.trim()) return;
     try {
-      const res = await fetch("http://localhost:3001/api/registrarProducto", {
+      const respuesta = await fetch("http://localhost:3001/api/registrarProducto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(nuevoProducto),
       });
-      if (!res.ok) throw new Error("Error al guardar");
+      if (!respuesta.ok) throw new Error("Error al guardar");
 
       setNuevoProducto({
         Nombre_Prod: "",
         Tipo_Prod: "",
         Existencia_Prod: "",
+        stock: "",
         Precio_Costo: "",
         Precio_Venta: "",
         Fe_caducidad: "",
@@ -106,7 +114,7 @@ const Producto = () => {
   const guardarEdicion = async () => {
     if (!productoEditado?.Nombre_Prod?.trim()) return;
     try {
-      const res = await fetch(
+      const respuesta = await fetch(
         `http://localhost:3001/api/actualizarProducto/${productoEditado.id_Producto}`,
         {
           method: "PATCH",
@@ -114,8 +122,7 @@ const Producto = () => {
           body: JSON.stringify(productoEditado),
         }
       );
-      if (!res.ok) throw new Error("Error al actualizar");
-
+      if (!respuesta.ok) throw new Error("Error al actualizar");
       setMostrarModalEdicion(false);
       await obtenerProductos();
     } catch (error) {
@@ -133,12 +140,11 @@ const Producto = () => {
 
   const confirmarEliminacion = async () => {
     try {
-      const res = await fetch(
+      const respuesta = await fetch(
         `http://localhost:3001/api/eliminarProducto/${productoAEliminado.id_Producto}`,
         { method: "DELETE" }
       );
-      if (!res.ok) throw new Error("Error al eliminar");
-
+      if (!respuesta.ok) throw new Error("Error al eliminar");
       setMostrarModalEliminacion(false);
       setProductoAEliminado(null);
       await obtenerProductos();
@@ -148,20 +154,21 @@ const Producto = () => {
     }
   };
 
-
-  // Generar Excel
-
+  // -----------------------------
+  // Reporte Excel
+  // -----------------------------
   const generarReporteExcel = async () => {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Productos");
 
     sheet.columns = [
-      { header: "ID", key: "id", width: 10 },
+      { header: "ID Producto", key: "id", width: 10 },
       { header: "Nombre", key: "nombre", width: 25 },
-      { header: "Tipo", key: "tipo", width: 20 },
-      { header: "Existencia", key: "existencia", width: 15 },
-      { header: "Precio Costo", key: "precio_costo", width: 15 },
-      { header: "Precio Venta", key: "precio_venta", width: 15 },
+      { header: "Tipo", key: "tipo", width: 15 },
+      { header: "Existencia", key: "existencia", width: 10 },
+      { header: "Stock", key: "stock", width: 10 },
+      { header: "Precio Costo", key: "costo", width: 15 },
+      { header: "Precio Venta", key: "venta", width: 15 },
       { header: "Fecha Caducidad", key: "fecha", width: 20 },
     ];
 
@@ -171,8 +178,9 @@ const Producto = () => {
         nombre: p.Nombre_Prod,
         tipo: p.Tipo_Prod,
         existencia: p.Existencia_Prod,
-        precio_costo: p.Precio_Costo,
-        precio_venta: p.Precio_Venta,
+        stock: p.stock,
+        costo: p.Precio_Costo,
+        venta: p.Precio_Venta,
         fecha: p.Fe_caducidad,
       });
     });
@@ -182,13 +190,13 @@ const Producto = () => {
     saveAs(blob, "reporte_productos.xlsx");
   };
 
-
+  // -----------------------------
   // Render
-
+  // -----------------------------
   return (
     <div
       style={{
-        backgroundImage: `url(${fondoAlmacenRural})`,
+        backgroundImage: `url(${fondoalmacenrural})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -205,7 +213,7 @@ const Producto = () => {
     >
       <Container
         className="d-flex justify-content-center align-items-center"
-        style={{ minHeight: "100vh", padding: "20px" }}
+        style={{ minHeight: "100vh", padding: "70px" }}
       >
 
         <div
@@ -213,7 +221,7 @@ const Producto = () => {
           style={{
             backgroundColor: "rgba(255, 255, 255, 0.67)",
             maxWidth: "900px",
-            width: "100%",
+            width: "145%",
             border: "3px solid #28a745",
             borderRadius: "20px",
             backdropFilter: "blur(8px)",
@@ -222,20 +230,27 @@ const Producto = () => {
             opacity: minimizado ? 0 : 1,
             pointerEvents: minimizado ? "none" : "all",
           }}
-
         >
-          <h4 className="text-center mb-4 fw-bold text-success">
-            Registro de Productos
-          </h4>
+          <Button
+            variant="danger"
+            size="sm"
+            className="position-absolute top-0 end-0 m-2 fw-bold"
+            style={{ zIndex: 10, borderRadius: "50%", width: "36px", height: "36px" }}
+            onClick={() => setMinimizado(true)}
+          >
+            X
+          </Button>
 
-          <div className="row mb-3 align-items-center">
-            <div className="col-lg-7 col-md-8 col-sm-12 mb-2 mb-md-0">
+          <h4 className="text-center mb-4 fw-bold text-success">Registro de Productos</h4>
+
+          <Row className="mb-3 align-items-center">
+            <Col lg={7} md={8} sm={12} className="mb-2 mb-md-0">
               <CuadroBusquedas
                 textoBusqueda={textoBusqueda}
                 manejarCambioBusqueda={manejarCambioBusqueda}
               />
-            </div>
-            <div className="col text-end">
+            </Col>
+            <Col className="text-end d-flex justify-content-end flex-wrap gap-2">
               <Button
                 variant="success"
                 className="fw-bold px-4 shadow-sm"
@@ -245,17 +260,15 @@ const Producto = () => {
               </Button>
               <Button
                 variant="info"
-                className="fw-bold px-4 shadow-sm ms-2 text-white"
+                className="fw-bold px-4 shadow-sm text-white"
                 onClick={generarReporteExcel}
               >
-                📊 Reporte 
+                📊 Reporte
               </Button>
-            </div>
-          </div>
+            </Col>
+          </Row>
 
-          <div
-            style={{ maxHeight: "60vh", overflowY: "auto", paddingRight: "8px" }}
-          >
+          <div style={{ maxHeight: "60vh", overflowY: "auto", paddingRight: "8px" }}>
             <TablaProductos
               productos={productosFiltrados}
               cargando={cargando}
@@ -270,8 +283,10 @@ const Producto = () => {
             setMostrarModal={setMostrarModal}
             nuevoProducto={nuevoProducto}
             setNuevoProducto={setNuevoProducto}
+            manejarCambioInput={manejarCambioInput}
             agregarProducto={agregarProducto}
           />
+
           <ModalEdicionProducto
             mostrar={mostrarModalEdicion}
             setMostrar={setMostrarModalEdicion}
@@ -288,6 +303,22 @@ const Producto = () => {
           />
         </div>
 
+        {minimizado && (
+          <Button
+            variant="success"
+            className="position-fixed bottom-0 end-0 m-4 shadow-lg"
+            style={{
+              zIndex: 1000,
+              borderRadius: "50%",
+              width: "60px",
+              height: "60px",
+              fontSize: "24px",
+            }}
+            onClick={() => setMinimizado(false)}
+          >
+            +
+          </Button>
+        )}
       </Container>
     </div>
   );
