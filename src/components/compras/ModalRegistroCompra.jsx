@@ -1,7 +1,17 @@
 import { useState } from "react";
 import { Modal, Button, Form, Row, Col, Table } from "react-bootstrap";
 
-const ModalRegistroCompra = ({ mostrar, setMostrar, detalles, setDetalles, productos, agregarCompra }) => {
+const ModalRegistroCompra = ({
+  mostrar,
+  setMostrar,
+  nuevaCompra,
+  setNuevaCompra,
+  detalles,
+  setDetalles,
+  proveedores,
+  productos,
+  agregarCompra
+}) => {
   const [productoSeleccionado, setProductoSeleccionado] = useState("");
   const [cantidad, setCantidad] = useState("");
   const [precio, setPrecio] = useState("");
@@ -33,6 +43,30 @@ const ModalRegistroCompra = ({ mostrar, setMostrar, detalles, setDetalles, produ
         <Modal.Title>Nueva Compra</Modal.Title>
       </Modal.Header>
       <Modal.Body>
+        <Form.Group className="mb-3">
+          <Form.Label>Proveedor</Form.Label>
+          <Form.Select
+            value={nuevaCompra.id_Proveedor}
+            onChange={(e) => setNuevaCompra({ ...nuevaCompra, id_Proveedor: e.target.value })}
+          >
+            <option value="">Seleccione un proveedor</option>
+            {proveedores.map((p) => (
+              <option key={p.id_Proveedor} value={p.id_Proveedor}>
+                {p.Nombre_Proveedor || p.nombre_proveedor}
+              </option>
+            ))}
+          </Form.Select>
+        </Form.Group>
+
+        <Form.Group className="mb-3">
+          <Form.Label>Fecha de compra</Form.Label>
+          <Form.Control
+            type="date"
+            value={nuevaCompra.Fe_compra}
+            onChange={(e) => setNuevaCompra({ ...nuevaCompra, Fe_compra: e.target.value })}
+          />
+        </Form.Group>
+
         <Row className="mb-2">
           <Col>
             {productos.length > 0 ? (
