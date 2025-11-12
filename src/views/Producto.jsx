@@ -44,7 +44,7 @@ const Producto = () => {
   // -----------------------------
   const obtenerProductos = async () => {
     try {
-      const respuesta = await fetch("http://localhost:3001/api/productos");
+      const respuesta = await fetch("http://localhost:3001/api/producto");
       if (!respuesta.ok) throw new Error("Error al obtener productos");
       const datos = await respuesta.json();
       setProductos(datos);
@@ -154,41 +154,48 @@ const Producto = () => {
     }
   };
 
-  // -----------------------------
-  // Reporte Excel
-  // -----------------------------
-  const generarReporteExcel = async () => {
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet("Productos");
+ const generarReporteExcel = async () => {
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Productos");
 
-    sheet.columns = [
-      { header: "ID Producto", key: "id", width: 10 },
-      { header: "Nombre", key: "nombre", width: 25 },
-      { header: "Tipo", key: "tipo", width: 15 },
-      { header: "Existencia", key: "existencia", width: 10 },
-      { header: "Stock", key: "stock", width: 10 },
-      { header: "Precio Costo", key: "costo", width: 15 },
-      { header: "Precio Venta", key: "venta", width: 15 },
-      { header: "Fecha Caducidad", key: "fecha", width: 20 },
-    ];
+  // CORREGIDO: key debe coincidir con el nombre en addRow
+  sheet.columns = [
+    { header: "ID Producto", key: "id", width: 12 },
+    { header: "Nombre", key: "nombre", width: 28 },
+    { header: "Tipo", key: "tipo", width: 15 },
+    { header: "Existencia", key: "existencia", width: 12 },
+    { header: "Stock", key: "stock", width: 10 }, // CORREGIDO
+    { header: "Precio Costo", key: "costo", width: 15 },
+    { header: "Precio Venta", key: "venta", width: 15 },
+    { header: "Caducidad", key: "fecha", width: 18 },
+  ];
 
-    productosFiltrados.forEach((p) => {
-      sheet.addRow({
-        id: p.id_Producto,
-        nombre: p.Nombre_Prod,
-        tipo: p.Tipo_Prod,
-        existencia: p.Existencia_Prod,
-        stock: p.stock,
-        costo: p.Precio_Costo,
-        venta: p.Precio_Venta,
-        fecha: p.Fe_caducidad,
-      });
+  productosFiltrados.forEach((p) => {
+    sheet.addRow({
+      id: p.id_Producto,
+      nombre: p.Nombre_Prod,
+      tipo: p.Tipo_Prod || "-",
+      existencia: p.Existencia_Prod || 0,
+      stock: p.stock || 0, // CORREGIDO: Aseguramos que salga
+      costo: `C$${parseFloat(p.Precio_Costo || 0).toFixed(2)}`,
+      venta: `C$${parseFloat(p.Precio_Venta || 0).toFixed(2)}`,
+      fecha: p.Fe_caducidad || "-",
     });
+  });
 
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: "application/octet-stream" });
-    saveAs(blob, "reporte_productos.xlsx");
+  // Estilo bonito
+  sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+  sheet.getRow(1).fill = {
+    type: "pattern",
+    pattern: "solid",
+    fgColor: { argb: "FF28A745" },
   };
+  sheet.getRow(1).alignment = { horizontal: "center", vertical: "middle" };
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: "application/octet-stream" });
+  saveAs(blob, `reporte_productos_${new Date().toISOString().split("T")[0]}.xlsx`);
+};
 
   // -----------------------------
   // Render

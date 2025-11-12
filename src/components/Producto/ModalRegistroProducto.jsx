@@ -70,7 +70,7 @@ const ModalRegistroProducto = ({
                 name="Nombre_Prod"
                 value={nuevoProducto.Nombre_Prod}
                 onChange={handleChange}
-                placeholder="Ej: Arroz Premium"
+                placeholder="Ej: Concentrado"
                 required
               />
             </div>

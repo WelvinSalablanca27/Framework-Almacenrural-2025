@@ -47,7 +47,7 @@ const Cliente = () => {
     const guardarEdicion = async () => {
         if (!clienteEditada.Nombre1.trim()) return;
         try {
-            const respuesta = await fetch(`http://localhost:3000/api/actualizarCliente/${clienteEditada.id_Cliente}`, {
+            const respuesta = await fetch(`http://localhost:3001/api/actualizarCliente/${clienteEditada.id_Cliente}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(clienteEditada)
@@ -68,7 +68,7 @@ const Cliente = () => {
 
     const confirmarEliminacion = async () => {
         try {
-            const respuesta = await fetch(`http://localhost:3000/api/eliminarCliente/${clienteAEliminar.id_Cliente}`, {
+            const respuesta = await fetch(`http://localhost:3001/api/eliminarCliente/${clienteAEliminar.id_Cliente}`, {
                 method: 'DELETE',
             });
             if (!respuesta.ok) throw new Error('Error al eliminar');
@@ -89,7 +89,7 @@ const Cliente = () => {
         if (!nuevoCliente.Nombre1.trim()) return;
 
         try {
-            const respuesta = await fetch("http://localhost:3000/api/registrarCliente", {
+            const respuesta = await fetch("http://localhost:3001/api/registrarCliente", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(nuevoCliente),
@@ -117,7 +117,7 @@ const Cliente = () => {
 
     const obtenerClientes = async () => {
         try {
-            const respuesta = await fetch("http://localhost:3000/api/clientes");
+            const respuesta = await fetch("http://localhost:3001/api/clientes");
 
             if (!respuesta.ok) {
                 throw new Error("Error al obtener los clientes");
