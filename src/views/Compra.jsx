@@ -7,6 +7,8 @@ import ModalEdicionCompra from '../components/compras/ModalEdicionCompra';
 import ModalEliminacionCompra from '../components/compras/ModalEliminacionCompra';
 import ModalDetallesCompra from '../components/DetalleCompra/ModalDetallesCompra';
 
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
@@ -47,7 +49,7 @@ const Compras = () => {
 
   // ===================== FUNCIONES =====================
 
- const formatearFechaHora = (fechaISO) => {
+  const formatearFechaHora = (fechaISO) => {
     if (!fechaISO) return '—';
     const fecha = new Date(fechaISO);
     const yyyy = fecha.getFullYear();
@@ -61,17 +63,149 @@ const Compras = () => {
     return `${yyyy}-${mm}-${dd} ${hours}:${minutes} ${ampm}`;
   };
 
-  // Exportar compras y detalles a Excel
-  const exportarAExcel = async () => {
+  // === GENERAR PDF GENERAL DE COMPRAS ===
+  const generarPDFCompras = () => {
+    const doc = new jsPDF();
+
+    // Encabezado con fondo azul
+    doc.setFillColor(0, 102, 204);
+    doc.rect(14, 10, doc.internal.pageSize.width - 28, 20, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(28);
+    doc.setFont(undefined, 'bold');
+    doc.text("Reporte de Compras", doc.internal.pageSize.width / 2, 25, { align: "center" });
+
+    // Columnas
+    const head = [["ID", "Proveedor", "Fecha Compra", "Total Productos", "Monto Total"]];
+
+    // Filas
+    const data = compras.map(c => {
+      const totalProductos = c.detalles ? c.detalles.reduce((sum, d) => sum + d.Cantidad, 0) : 0;
+      const montoTotal = c.detalles ? c.detalles.reduce((sum, d) => sum + (d.Cantidad * d.Precio), 0) : 0;
+      return [
+        c.id_compra,
+        c.nombre_proveedor || '—',
+        c.Fe_compra,
+        totalProductos,
+        `$${montoTotal.toFixed(2)}`
+      ];
+    });
+
+    // Marcador de páginas
+    let totalPagesExp = "{total_pages_count_string}";
+
+    // Configuración de tabla
+    doc.autoTable({
+      head: head,
+      body: data,
+      startY: 40,
+      theme: 'grid',
+      styles: { fontSize: 10, cellPadding: 3 },
+      headStyles: { fillColor: [0, 102, 204], textColor: 255, fontStyle: 'bold' },
+      didDrawPage: (data) => {
+        // Pie de página con número de página
+        let str = `Página ${doc.internal.getNumberOfPages()}`;
+        if (typeof doc.putTotalPages === 'function') {
+          str = str + " de " + totalPagesExp;
+        }
+        doc.setFontSize(10);
+        doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10);
+      }
+    });
+
+    // Actualizar total de páginas
+    if (typeof doc.putTotalPages === 'function') {
+      doc.putTotalPages(totalPagesExp);
+    }
+
+    // Guardar
+    const fecha = new Date().toISOString().split('T')[0];
+    doc.save(`Compras_${fecha}.pdf`);
+  };
+
+  // === GENERAR PDF DETALLE DE UNA COMPRA ===
+  const generarPDFDetalleCompra = async (compra) => {
+    const doc = new jsPDF();
+
+    // Cargar detalles
+    let detalles = [];
+    try {
+      const resp = await fetch('http://localhost:3001/api/DetallesCompra');
+      const todos = await resp.json();
+      detalles = todos.filter(d => d.id_compra === compra.id_compra);
+    } catch (error) {
+      console.error("Error cargando detalles:", error);
+    }
+
+    // Encabezado
+    doc.setFillColor(0, 102, 204);
+    doc.rect(14, 10, doc.internal.pageSize.width - 28, 20, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(24);
+    doc.setFont(undefined, 'bold');
+    doc.text(`Compra #${compra.id_compra}`, doc.internal.pageSize.width / 2, 25, { align: "center" });
+
+    // Info general
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+    doc.text(`Proveedor: ${compra.nombre_proveedor}`, 20, 40);
+    doc.text(`Fecha: ${compra.Fe_compra}`, 20, 48);
+
+    // Tabla de productos
+    const head = [["Producto", "Cant.", "Precio Unit.", "Subtotal", "Ing.", "Cad."]];
+    const body = await Promise.all(detalles.map(async (d) => {
+      const nombreProd = await obtenerNombreProducto(d.id_Producto);
+      const subtotal = d.Cantidad * d.Precio;
+      return [
+        nombreProd,
+        d.Cantidad,
+        `$${d.Precio.toFixed(2)}`,
+        `$${subtotal.toFixed(2)}`,
+        formatearFechaHora(d.Fe_Ingresado),
+        formatearFechaHora(d.Fe_caducidad)
+      ];
+    }));
+
+    doc.autoTable({
+      head: head,
+      body: body,
+      startY: 60,
+      theme: 'striped',
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [0, 102, 204] }
+    });
+
+    // Total
+    const total = detalles.reduce((sum, d) => sum + (d.Cantidad * d.Precio), 0);
+    doc.setFontSize(12);
+    doc.setFont(undefined, 'bold');
+    doc.text(`Total: $${total.toFixed(2)}`, doc.internal.pageSize.width - 50, doc.autoTable.previous.finalY + 15);
+
+    // Imagen del producto (si existe)
+    const productoConImagen = detalles.find(d => d.imagen);
+    if (productoConImagen && productoConImagen.imagen) {
+      try {
+        doc.addPage();
+        doc.text("Imagen del Producto", 20, 20);
+        doc.addImage(productoConImagen.imagen, 'JPEG', 20, 30, 80, 80);
+      } catch (err) {
+        console.warn("No se pudo cargar imagen:", err);
+      }
+    }
+
+    const fecha = new Date().toISOString().split('T')[0];
+    doc.save(`Compra_${compra.id_compra}_${fecha}.pdf`);
+  };
+
+  // === EXPORTAR A EXCEL ===
+  const exportarExcelCompras = async () => {
     if (compras.length === 0) {
       alert("No hay datos para exportar.");
       return;
     }
 
-    // Crear un arreglo para Excel
     const datosParaExcel = [];
     for (const c of compras) {
-      // Obtener detalles de cada compra
       let detalles = [];
       try {
         const resp = await fetch('http://localhost:3001/api/DetallesCompra');
@@ -98,9 +232,9 @@ const Compras = () => {
             "ID Compra": c.id_compra,
             "Proveedor": c.nombre_proveedor,
             "Fecha Compra": c.Fe_compra,
-            "Producto": d.nombre_producto || '',
-            "Cantidad": d.Cantidad || '',
-            "Precio Unitario": d.Precio || '',
+            "Producto": await obtenerNombreProducto(d.id_Producto),
+            "Cantidad": d.Cantidad,
+            "Precio Unitario": d.Precio,
             "Fecha Ingresado": formatearFechaHora(d.Fe_Ingresado),
             "Fecha Caducidad": formatearFechaHora(d.Fe_caducidad)
           });
@@ -112,10 +246,10 @@ const Compras = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Compras");
     const archivoExcel = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    saveAs(new Blob([archivoExcel], { type: "application/octet-stream" }), "compras.xlsx");
+    const fecha = new Date().toISOString().split('T')[0];
+    saveAs(new Blob([archivoExcel], { type: "application/octet-stream" }), `Compras_${fecha}.xlsx`);
   };
 
-  // Obtener nombre del proveedor
   const obtenerNombreProveedor = async (idProveedor) => {
     if (!idProveedor) return '—';
     try {
@@ -129,7 +263,6 @@ const Compras = () => {
     }
   };
 
-  // Obtener nombre del producto
   const obtenerNombreProducto = async (idProducto) => {
     if (!idProducto) return '—';
     try {
@@ -143,7 +276,6 @@ const Compras = () => {
     }
   };
 
-  // Obtener todas las compras
   const obtenerCompras = async () => {
     try {
       const resp = await fetch('http://localhost:3001/api/compras');
@@ -168,7 +300,6 @@ const Compras = () => {
     }
   };
 
-  // Obtener detalles de compra
   const obtenerDetallesCompra = async (id_compra) => {
     try {
       const resp = await fetch('http://localhost:3001/api/DetallesCompra');
@@ -193,7 +324,6 @@ const Compras = () => {
     }
   };
 
-  // Obtener lista de proveedores
   const obtenerProveedores = async () => {
     try {
       const resp = await fetch('http://localhost:3001/api/proveedores');
@@ -205,7 +335,6 @@ const Compras = () => {
     }
   };
 
-  // Obtener lista de productos
   const obtenerProductos = async () => {
     try {
       const resp = await fetch('http://localhost:3001/api/producto');
@@ -217,7 +346,6 @@ const Compras = () => {
     }
   };
 
-  // Filtrar compras
   const manejarCambioBusqueda = (e) => {
     const texto = e.target.value.toLowerCase();
     setTextoBusqueda(texto);
@@ -229,7 +357,6 @@ const Compras = () => {
     setPaginaActual(1);
   };
 
-  // Agregar nueva compra
   const agregarCompra = async () => {
     if (!nuevaCompra.id_Proveedor || detallesNuevos.length === 0) {
       alert("Completa proveedor y al menos un detalle.");
@@ -255,14 +382,15 @@ const Compras = () => {
       }
 
       await obtenerCompras();
-      cerrarModalRegistro();
+      setMostrarModalRegistro(false);
+      setNuevaCompra({ id_Proveedor: '', Fe_compra: hoy });
+      setDetallesNuevos([]);
     } catch (error) {
       console.error(error);
       alert("Error al registrar compra.");
     }
   };
 
-  // Abrir modal de edición
   const abrirModalEdicion = async (compra) => {
     setCompraAEditar(compra);
 
@@ -290,7 +418,6 @@ const Compras = () => {
     setMostrarModalEdicion(true);
   };
 
-  // Actualizar compra
   const actualizarCompra = async () => {
     try {
       await fetch(`http://localhost:3001/api/actualizarcompra/${compraAEditar.id_compra}`, {
@@ -316,13 +443,15 @@ const Compras = () => {
       }
 
       await obtenerCompras();
-      cerrarModalEdicion();
+      setMostrarModalEdicion(false);
+      setCompraAEditar(null);
+      setCompraEnEdicion(null);
+      setDetallesNuevos([]);
     } catch (error) {
       alert("Error al actualizar.");
     }
   };
 
-  // Eliminar compra
   const abrirModalEliminacion = (compra) => {
     setCompraAEliminar(compra);
     setMostrarModalEliminar(true);
@@ -337,21 +466,7 @@ const Compras = () => {
       alert("No se pudo eliminar.");
     }
   };
-// Cerrar modales
-  const cerrarModalRegistro = () => {
-    setMostrarModalRegistro(false);
-    setNuevaCompra({ id_Proveedor: '', Fe_compra: hoy });
-    setDetallesNuevos([]);
-  };
 
-  const cerrarModalEdicion = () => {
-    setMostrarModalEdicion(false);
-    setCompraAEditar(null);
-    setCompraEnEdicion(null);
-    setDetallesNuevos([]);
-  };
-
-  // Cargar al iniciar
   useEffect(() => {
     obtenerCompras();
     obtenerProveedores();
@@ -362,15 +477,14 @@ const Compras = () => {
   return (
     <Container className="mt-4">
       <h4>Compras</h4>
-      <Row>
-        <Col lg={5} md={6} sm={8} xs={12}>
+      <Row className="mb-3 align-items-center">
+        <Col lg={4} md={5} sm={12}>
           <CuadroBusquedas
             textoBusqueda={textoBusqueda}
             manejarCambioBusqueda={manejarCambioBusqueda}
           />
         </Col>
-        +<Col className="text-end d-flex justify-content-end flex-wrap gap-2">
-          {/* Botón Nueva Compra */}
+        <Col className="text-end d-flex justify-content-end flex-wrap gap-2">
           <Button
             variant="success"
             size="sm"
@@ -380,17 +494,24 @@ const Compras = () => {
             + Compra
           </Button>
 
-          {/* Botón Exportar Excel */}
+          <Button
+            variant="danger"
+            size="sm"
+            className="fw-bold px-3 py-1 shadow-sm text-white"
+            onClick={generarPDFCompras}
+          >
+            📄 PDF
+          </Button>
+
           <Button
             variant="info"
             size="sm"
             className="fw-bold px-3 py-1 shadow-sm text-white"
-            onClick={exportarAExcel} // tu función para exportar
+            onClick={exportarExcelCompras}
           >
-            📄 Excel
+            📊 Excel
           </Button>
         </Col>
-
       </Row>
 
       <TablaCompras
@@ -399,6 +520,7 @@ const Compras = () => {
         obtenerDetalles={obtenerDetallesCompra}
         abrirModalEdicion={abrirModalEdicion}
         abrirModalEliminacion={abrirModalEliminacion}
+        generarPDFDetalleCompra={generarPDFDetalleCompra}
         totalElementos={comprasFiltradas.length}
         elementosPorPagina={elementosPorPagina}
         paginaActual={paginaActual}
@@ -407,7 +529,7 @@ const Compras = () => {
 
       <ModalRegistroCompra
         mostrar={mostrarModalRegistro}
-        setMostrar={cerrarModalRegistro}
+        setMostrar={setMostrarModalRegistro}
         nuevaCompra={nuevaCompra}
         setNuevaCompra={setNuevaCompra}
         detalles={detallesNuevos}
@@ -420,7 +542,7 @@ const Compras = () => {
 
       <ModalEdicionCompra
         mostrar={mostrarModalEdicion}
-        setMostrar={cerrarModalEdicion}
+        setMostrar={setMostrarModalEdicion}
         compra={compraAEditar}
         compraEnEdicion={compraEnEdicion}
         setCompraEnEdicion={setCompraEnEdicion}
@@ -440,7 +562,7 @@ const Compras = () => {
 
       <ModalDetallesCompra
         mostrarModal={mostrarModalDetalles}
-        setMostrarModal={() => setMostrarModalDetalles(false)}
+        setMostrarModal={setMostrarModalDetalles}
         detalles={detallesCompra}
       />
     </Container>

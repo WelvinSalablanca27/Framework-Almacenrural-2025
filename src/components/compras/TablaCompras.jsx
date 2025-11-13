@@ -11,7 +11,6 @@ const TablaCompras = ({
   paginaActual = 1,
   establecerPaginaActual,
 }) => {
-  // Mostrar spinner mientras carga
   if (cargando) {
     return (
       <div className="text-center my-5">
@@ -21,7 +20,6 @@ const TablaCompras = ({
     );
   }
 
-  // Si no hay compras
   if (compras.length === 0) {
     return (
       <p className="text-center text-muted py-5">
@@ -30,8 +28,25 @@ const TablaCompras = ({
     );
   }
 
-  // Cálculo de páginas
   const totalPaginas = Math.ceil(totalElementos / elementosPorPagina);
+
+  const handlePagina = (numero) => {
+    if (numero < 1) numero = 1;
+    if (numero > totalPaginas) numero = totalPaginas;
+    establecerPaginaActual(numero);
+  };
+
+  // Generar números de página visibles (máx. 5)
+  const generarPaginacion = () => {
+    const paginas = [];
+    let inicio = Math.max(1, paginaActual - 2);
+    let fin = Math.min(totalPaginas, paginaActual + 2);
+
+    for (let i = inicio; i <= fin; i++) {
+      paginas.push(i);
+    }
+    return paginas;
+  };
 
   return (
     <>
@@ -45,8 +60,8 @@ const TablaCompras = ({
         <thead className="bg-success text-white">
           <tr>
             <th>ID Compra</th>
-            <th>Fecha</th>
             <th>Proveedor</th>
+            <th>Fecha</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -54,8 +69,8 @@ const TablaCompras = ({
           {compras.map((c) => (
             <tr key={c.id_compra}>
               <td>{c.id_compra}</td>
-              <td>{new Date(c.Fe_compra).toLocaleString()}</td>
               <td>{c.nombre_proveedor}</td>
+              <td>{new Date(c.Fe_compra).toLocaleString()}</td>
               <td>
                 <div className="d-flex gap-2 justify-content-center flex-wrap">
                   <Button
@@ -90,16 +105,22 @@ const TablaCompras = ({
 
       {/* Paginación */}
       {totalPaginas > 1 && (
-        <Pagination className="justify-content-center mt-3">
-          {[...Array(totalPaginas)].map((_, i) => (
+        <Pagination className="justify-content-center mt-3 flex-wrap">
+          <Pagination.First onClick={() => handlePagina(1)} disabled={paginaActual === 1} />
+          <Pagination.Prev onClick={() => handlePagina(paginaActual - 1)} disabled={paginaActual === 1} />
+
+          {generarPaginacion().map((num) => (
             <Pagination.Item
-              key={i + 1}
-              active={i + 1 === paginaActual}
-              onClick={() => establecerPaginaActual(i + 1)}
+              key={num}
+              active={num === paginaActual}
+              onClick={() => handlePagina(num)}
             >
-              {i + 1}
+              {num}
             </Pagination.Item>
           ))}
+
+          <Pagination.Next onClick={() => handlePagina(paginaActual + 1)} disabled={paginaActual === totalPaginas} />
+          <Pagination.Last onClick={() => handlePagina(totalPaginas)} disabled={paginaActual === totalPaginas} />
         </Pagination>
       )}
     </>
