@@ -12,6 +12,10 @@ import "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
+// FONDO IGUAL QUE PRODUCTO
+const fondoalmacenrural =
+  "https://i.pinimg.com/736x/76/fb/4a/76fb4a687980c6b31824bc0752d66f10.jpg";
+
 const Compras = () => {
   const [compras, setCompras] = useState([]);
   const [comprasFiltradas, setComprasFiltradas] = useState([]);
@@ -42,6 +46,8 @@ const Compras = () => {
   const [compraEnEdicion, setCompraEnEdicion] = useState(null);
   const [detallesNuevos, setDetallesNuevos] = useState([]);
 
+  const [minimizado, setMinimizado] = useState(false); // NUEVO
+
   const comprasPaginadas = comprasFiltradas.slice(
     (paginaActual - 1) * elementosPorPagina,
     paginaActual * elementosPorPagina
@@ -63,11 +69,10 @@ const Compras = () => {
     return `${yyyy}-${mm}-${dd} ${hours}:${minutes} ${ampm}`;
   };
 
-  // === GENERAR PDF GENERAL DE COMPRAS ===
+  
   const generarPDFCompras = () => {
     const doc = new jsPDF();
 
-    // Encabezado con fondo azul
     doc.setFillColor(0, 102, 204);
     doc.rect(14, 10, doc.internal.pageSize.width - 28, 20, 'F');
     doc.setTextColor(255, 255, 255);
@@ -75,11 +80,12 @@ const Compras = () => {
     doc.setFont(undefined, 'bold');
     doc.text("Reporte de Compras", doc.internal.pageSize.width / 2, 25, { align: "center" });
 
-    // Columnas
+
     const head = [["ID", "Proveedor", "Fecha Compra", "Total Productos", "Monto Total"]];
 
-    // Filas
+    
     const data = compras.map(c => {
+
       const totalProductos = c.detalles ? c.detalles.reduce((sum, d) => sum + d.Cantidad, 0) : 0;
       const montoTotal = c.detalles ? c.detalles.reduce((sum, d) => sum + (d.Cantidad * d.Precio), 0) : 0;
       return [
@@ -91,10 +97,7 @@ const Compras = () => {
       ];
     });
 
-    // Marcador de páginas
     let totalPagesExp = "{total_pages_count_string}";
-
-    // Configuración de tabla
     doc.autoTable({
       head: head,
       body: data,
@@ -103,7 +106,6 @@ const Compras = () => {
       styles: { fontSize: 10, cellPadding: 3 },
       headStyles: { fillColor: [0, 102, 204], textColor: 255, fontStyle: 'bold' },
       didDrawPage: (data) => {
-        // Pie de página con número de página
         let str = `Página ${doc.internal.getNumberOfPages()}`;
         if (typeof doc.putTotalPages === 'function') {
           str = str + " de " + totalPagesExp;
@@ -113,21 +115,16 @@ const Compras = () => {
       }
     });
 
-    // Actualizar total de páginas
     if (typeof doc.putTotalPages === 'function') {
       doc.putTotalPages(totalPagesExp);
     }
 
-    // Guardar
     const fecha = new Date().toISOString().split('T')[0];
     doc.save(`Compras_${fecha}.pdf`);
   };
 
-  // === GENERAR PDF DETALLE DE UNA COMPRA ===
   const generarPDFDetalleCompra = async (compra) => {
     const doc = new jsPDF();
-
-    // Cargar detalles
     let detalles = [];
     try {
       const resp = await fetch('http://localhost:3001/api/DetallesCompra');
@@ -137,7 +134,6 @@ const Compras = () => {
       console.error("Error cargando detalles:", error);
     }
 
-    // Encabezado
     doc.setFillColor(0, 102, 204);
     doc.rect(14, 10, doc.internal.pageSize.width - 28, 20, 'F');
     doc.setTextColor(255, 255, 255);
@@ -145,13 +141,11 @@ const Compras = () => {
     doc.setFont(undefined, 'bold');
     doc.text(`Compra #${compra.id_compra}`, doc.internal.pageSize.width / 2, 25, { align: "center" });
 
-    // Info general
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(12);
     doc.text(`Proveedor: ${compra.nombre_proveedor}`, 20, 40);
     doc.text(`Fecha: ${compra.Fe_compra}`, 20, 48);
 
-    // Tabla de productos
     const head = [["Producto", "Cant.", "Precio Unit.", "Subtotal", "Ing.", "Cad."]];
     const body = await Promise.all(detalles.map(async (d) => {
       const nombreProd = await obtenerNombreProducto(d.id_Producto);
@@ -175,13 +169,11 @@ const Compras = () => {
       headStyles: { fillColor: [0, 102, 204] }
     });
 
-    // Total
     const total = detalles.reduce((sum, d) => sum + (d.Cantidad * d.Precio), 0);
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
     doc.text(`Total: $${total.toFixed(2)}`, doc.internal.pageSize.width - 50, doc.autoTable.previous.finalY + 15);
 
-    // Imagen del producto (si existe)
     const productoConImagen = detalles.find(d => d.imagen);
     if (productoConImagen && productoConImagen.imagen) {
       try {
@@ -197,7 +189,6 @@ const Compras = () => {
     doc.save(`Compra_${compra.id_compra}_${fecha}.pdf`);
   };
 
-  // === EXPORTAR A EXCEL ===
   const exportarExcelCompras = async () => {
     if (compras.length === 0) {
       alert("No hay datos para exportar.");
@@ -475,97 +466,162 @@ const Compras = () => {
 
   // ===================== RENDER =====================
   return (
-    <Container className="mt-4">
-      <h4>Compras</h4>
-      <Row className="mb-3 align-items-center">
-        <Col lg={4} md={5} sm={12}>
-          <CuadroBusquedas
-            textoBusqueda={textoBusqueda}
-            manejarCambioBusqueda={manejarCambioBusqueda}
-          />
-        </Col>
-        <Col className="text-end d-flex justify-content-end flex-wrap gap-2">
-          <Button
-            variant="success"
-            size="sm"
-            className="fw-bold px-3 py-1 shadow-sm"
-            onClick={() => setMostrarModalRegistro(true)}
-          >
-            + Compra
-          </Button>
-
+    <div
+      style={{
+        backgroundImage: `url(${fondoalmacenrural})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+        minHeight: "100vh",
+        width: "100vw",
+        margin: 0,
+        padding: 0,
+        position: "fixed",
+        top: 0,
+        left: 0,
+        overflow: "auto",
+      }}
+    >
+      <Container
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "100vh", padding: "70px" }}
+      >
+        <div
+          className="position-relative p-4 rounded-4 shadow-lg"
+          style={{
+            backgroundColor: "rgba(255, 255, 255, 0.67)",
+            maxWidth: "900px",
+            width: "145%",
+            border: "3px solid #28a745",
+            borderRadius: "20px",
+            backdropFilter: "blur(8px)",
+            transition: "all 0.4s ease",
+            transform: minimizado ? "scale(0)" : "scale(1)",
+            opacity: minimizado ? 0 : 1,
+            pointerEvents: minimizado ? "none" : "all",
+          }}
+        >
+          {/* BOTÓN X PARA MINIMIZAR */}
           <Button
             variant="danger"
             size="sm"
-            className="fw-bold px-3 py-1 shadow-sm text-white"
-            onClick={generarPDFCompras}
+            className="position-absolute top-0 end-0 m-2 fw-bold"
+            style={{ zIndex: 10, borderRadius: "50%", width: "36px", height: "36px" }}
+            onClick={() => setMinimizado(true)}
           >
-            📄 PDF
+            X
           </Button>
 
+          <h4 className="text-center mb-4 fw-bold text-success">Compras</h4>
+
+          <Row className="mb-3 align-items-center">
+            <Col lg={7} md={8} sm={12} className="mb-2 mb-md-0">
+              <CuadroBusquedas
+                textoBusqueda={textoBusqueda}
+                manejarCambioBusqueda={manejarCambioBusqueda}
+              />
+            </Col>
+            <Col className="text-end d-flex justify-content-end flex-wrap gap-2">
+              <Button
+                variant="success"
+                className="fw-bold px-4 shadow-sm"
+                onClick={() => setMostrarModalRegistro(true)}
+              >
+                + Compra
+              </Button>
+              <Button
+                variant="danger"
+                className="fw-bold px-4 shadow-sm text-white"
+                onClick={generarPDFCompras}
+              >
+                PDF
+              </Button>
+              <Button
+                variant="info"
+                className="fw-bold px-4 shadow-sm text-white"
+                onClick={exportarExcelCompras}
+              >
+                Excel
+              </Button>
+            </Col>
+          </Row>
+
+          <div style={{ maxHeight: "60vh", overflowY: "auto", paddingRight: "8px" }}>
+            <TablaCompras
+              compras={comprasPaginadas}
+              cargando={cargando}
+              obtenerDetalles={obtenerDetallesCompra}
+              abrirModalEdicion={abrirModalEdicion}
+              abrirModalEliminacion={abrirModalEliminacion}
+              generarPDFDetalleCompra={generarPDFDetalleCompra}
+              totalElementos={comprasFiltradas.length}
+              elementosPorPagina={elementosPorPagina}
+              paginaActual={paginaActual}
+              establecerPaginaActual={setPaginaActual}
+            />
+          </div>
+
+          {/* MODALES */}
+          <ModalRegistroCompra
+            mostrar={mostrarModalRegistro}
+            setMostrar={setMostrarModalRegistro}
+            nuevaCompra={nuevaCompra}
+            setNuevaCompra={setNuevaCompra}
+            detalles={detallesNuevos}
+            setDetalles={setDetallesNuevos}
+            proveedores={proveedores}
+            productos={productos}
+            agregarCompra={agregarCompra}
+            hoy={hoy}
+          />
+
+          <ModalEdicionCompra
+            mostrar={mostrarModalEdicion}
+            setMostrar={setMostrarModalEdicion}
+            compra={compraAEditar}
+            compraEnEdicion={compraEnEdicion}
+            setCompraEnEdicion={setCompraEnEdicion}
+            detalles={detallesNuevos}
+            setDetalles={setDetallesNuevos}
+            proveedores={proveedores}
+            productos={productos}
+            actualizarCompra={actualizarCompra}
+          />
+
+          <ModalEliminacionCompra
+            mostrar={mostrarModalEliminar}
+            setMostrar={setMostrarModalEliminar}
+            compra={compraAEliminar}
+            confirmarEliminacion={eliminarCompra}
+          />
+
+          <ModalDetallesCompra
+            mostrarModal={mostrarModalDetalles}
+            setMostrarModal={setMostrarModalDetalles}
+            detalles={detallesCompra}
+          />
+        </div>
+
+        {/* BOTÓN FLOTANTE PARA RESTAURAR */}
+        {minimizado && (
           <Button
-            variant="info"
-            size="sm"
-            className="fw-bold px-3 py-1 shadow-sm text-white"
-            onClick={exportarExcelCompras}
+            variant="success"
+            className="position-fixed bottom-0 end-0 m-4 shadow-lg"
+            style={{
+              zIndex: 1000,
+              borderRadius: "50%",
+              width: "60px",
+              height: "60px",
+              fontSize: "24px",
+            }}
+            onClick={() => setMinimizado(false)}
           >
-            📊 Excel
+            +
           </Button>
-        </Col>
-      </Row>
-
-      <TablaCompras
-        compras={comprasPaginadas}
-        cargando={cargando}
-        obtenerDetalles={obtenerDetallesCompra}
-        abrirModalEdicion={abrirModalEdicion}
-        abrirModalEliminacion={abrirModalEliminacion}
-        generarPDFDetalleCompra={generarPDFDetalleCompra}
-        totalElementos={comprasFiltradas.length}
-        elementosPorPagina={elementosPorPagina}
-        paginaActual={paginaActual}
-        establecerPaginaActual={setPaginaActual}
-      />
-
-      <ModalRegistroCompra
-        mostrar={mostrarModalRegistro}
-        setMostrar={setMostrarModalRegistro}
-        nuevaCompra={nuevaCompra}
-        setNuevaCompra={setNuevaCompra}
-        detalles={detallesNuevos}
-        setDetalles={setDetallesNuevos}
-        proveedores={proveedores}
-        productos={productos}
-        agregarCompra={agregarCompra}
-        hoy={hoy}
-      />
-
-      <ModalEdicionCompra
-        mostrar={mostrarModalEdicion}
-        setMostrar={setMostrarModalEdicion}
-        compra={compraAEditar}
-        compraEnEdicion={compraEnEdicion}
-        setCompraEnEdicion={setCompraEnEdicion}
-        detalles={detallesNuevos}
-        setDetalles={setDetallesNuevos}
-        proveedores={proveedores}
-        productos={productos}
-        actualizarCompra={actualizarCompra}
-      />
-
-      <ModalEliminacionCompra
-        mostrar={mostrarModalEliminar}
-        setMostrar={setMostrarModalEliminar}
-        compra={compraAEliminar}
-        confirmarEliminacion={eliminarCompra}
-      />
-
-      <ModalDetallesCompra
-        mostrarModal={mostrarModalDetalles}
-        setMostrarModal={setMostrarModalDetalles}
-        detalles={detallesCompra}
-      />
-    </Container>
+        )}
+      </Container>
+    </div>
   );
 };
 
