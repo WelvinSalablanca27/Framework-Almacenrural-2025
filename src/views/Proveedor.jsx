@@ -348,7 +348,9 @@ const Proveedor = () => {
                         setNuevoProveedor={setNuevoProveedor}
                         manejarCambioInput={manejarCambioInput}
                         agregarProveedor={agregarProveedor}
+                        listaProveedores={proveedores} // <-- aquí pasamos los proveedores existentes
                     />
+
 
                     <ModalEdicionProveedor
                         mostrar={mostrarModalEdicion}
