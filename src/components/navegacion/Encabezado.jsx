@@ -1,171 +1,86 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Nav, Navbar, Offcanvas } from "react-bootstrap"; // QUITÉ Container
+import { Navbar, Offcanvas, Nav } from "react-bootstrap";
 
 const Encabezado = () => {
-  const [mostrarMenu, setMostrarMenu] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const [show, setShow] = useState(false);
 
-  const manejarToggle = () => setMostrarMenu(!mostrarMenu);
+  const toggleMenu = () => setShow(!show);
 
-  const manejarNavegacion = (ruta) => {
+  const navegar = (ruta) => {
     navigate(ruta);
-    setMostrarMenu(false);
+    setShow(false); // cierra menú al hacer clic
   };
 
-  const esRutaActiva = (ruta) => location.pathname.toLowerCase() === ruta.toLowerCase();
+  const activo = (ruta) => location.pathname === ruta;
+
+  // No mostrar barra en login o inicio
+  if (location.pathname === "/" || location.pathname === "/login") return null;
+
+  const menuItems = [
+    { ruta: "/", icono: "bi-house-door-fill", nombre: "Inicio" },
+    { ruta: "/usuarios", icono: "bi-people-fill", nombre: "Usuarios" },
+    { ruta: "/cliente", icono: "bi-person-circle", nombre: "Cliente" },
+    { ruta: "/producto", icono: "bi-box-seam-fill", nombre: "Producto" },
+    { ruta: "/proveedor", icono: "bi-truck", nombre: "Proveedor" },
+    { ruta: "/venta", icono: "bi-graph-up-arrow", nombre: "Venta" },
+    { ruta: "/compra", icono: "bi-cart-fill", nombre: "Compra" },
+  ];
 
   return (
-    <Navbar 
-      expand="md" 
-      fixed="top" 
-      className="bg-primary" 
-      style={{ minHeight: "44px" }}
-    >
-      {/* QUITÉ <Container> PARA QUE QUEDE PEGADO AL BORDE */}
-      <Navbar.Brand
-        onClick={() => manejarNavegacion("/")}
-        className="text-white fw-bold ms-2"  // ← Añadí margen izquierdo pequeño
-        style={{ fontSize: "1rem", cursor: "pointer" }}
-      >
-        Almacen-rural
-      </Navbar.Brand>
+    <>
+      <Navbar bg="primary" variant="dark" fixed="top" className="shadow-sm" style={{ height: "56px" }}>
+        <div className="container-fluid d-flex justify-content-between align-items-center px-3">
+          <Navbar.Brand
+            onClick={() => navegar("/")}
+            className="fw-bold text-white"
+            style={{ cursor: "pointer", fontSize: "1.35rem" }}
+          >
+            <i className="bi bi-shop-window me-2"></i> Almacén Rural
+          </Navbar.Brand>
 
-      <Navbar.Toggle
-        aria-controls="menu-offcanvas"
-        onClick={manejarToggle}
-        className="bg-light p-1 me-2"  // ← Ajusté margen derecho
-        style={{ fontSize: "0.9rem" }}
-      />
+          <button
+            onClick={toggleMenu}
+            className="btn btn-primary border-0 p-2 rounded-circle shadow-sm"
+            style={{ width: "44px", height: "44px" }}
+          >
+            <i className="bi bi-list fs-3"></i>
+          </button>
+        </div>
+      </Navbar>
 
-      <Navbar.Offcanvas
-        id="menu-offcanvas"
-        placement="end"
-        show={mostrarMenu}
-        onHide={() => setMostrarMenu(false)}
-      >
-        <Offcanvas.Header closeButton>
-          <Offcanvas.Title className="fw-bold text-primary">Menú principal</Offcanvas.Title>
+      <Offcanvas show={show} onHide={() => setShow(false)} placement="end" style={{ width: "280px" }}>
+        <Offcanvas.Header closeButton className="border-bottom pb-3 bg-primary text-white">
+          <Offcanvas.Title className="fw-bold">
+            <i className="bi bi-grid-3x3-gap-fill me-2"></i> Menú Principal
+          </Offcanvas.Title>
         </Offcanvas.Header>
-        <Offcanvas.Body>
-          <Nav className="flex-grow-1 pe-3">
-            {/* INICIO */}
-            <Nav.Link
-              onClick={() => manejarNavegacion("/")}
-              className={`d-flex align-items-center ${
-                esRutaActiva("/") ? "bg-white text-primary fw-bold shadow-sm" : "text-dark"
-              }`}
-              style={{
-                borderBottom: esRutaActiva("/") ? "3px solid #0d6efd" : "none",
-                padding: "0.6rem 1rem",
-                borderRadius: "0.375rem",
-                margin: "0.25rem 0",
-              }}
-            >
-              <i className="bi bi-house-fill me-2"></i> Inicio
-            </Nav.Link>
 
-            {/* USUARIOS */}
-            <Nav.Link
-              onClick={() => manejarNavegacion("/usuarios")}
-              className={`d-flex align-items-center ${
-                esRutaActiva("/usuarios") ? "bg-white text-primary fw-bold shadow-sm" : "text-dark"
-              }`}
-              style={{
-                borderBottom: esRutaActiva("/usuarios") ? "3px solid #0d6efd" : "none",
-                padding: "0.6rem 1rem",
-                borderRadius: "0.375rem",
-                margin: "0.25rem 0",
-              }}
-            >
-              <i className="bi bi-people-fill me-2"></i> Usuarios
-            </Nav.Link>
-
-            {/* CLIENTE */}
-            <Nav.Link
-              onClick={() => manejarNavegacion("/cliente")}
-              className={`d-flex align-items-center ${
-                esRutaActiva("/cliente") ? "bg-white text-primary fw-bold shadow-sm" : "text-dark"
-              }`}
-              style={{
-                borderBottom: esRutaActiva("/cliente") ? "3px solid #0d6efd" : "none",
-                padding: "0.6rem 1rem",
-                borderRadius: "0.375rem",
-                margin: "0.25rem 0",
-              }}
-            >
-              <i className="bi bi-person-circle me-2"></i> Cliente
-            </Nav.Link>
-
-            {/* VENTA */}
-            <Nav.Link
-              onClick={() => manejarNavegacion("/venta")}
-              className={`d-flex align-items-center ${
-                esRutaActiva("/venta") ? "bg-white text-primary fw-bold shadow-sm" : "text-dark"
-              }`}
-              style={{
-                borderBottom: esRutaActiva("/venta") ? "3px solid #0d6efd" : "none",
-                padding: "0.6rem 1rem",
-                borderRadius: "0.375rem",
-                margin: "0.25rem 0",
-              }}
-            >
-              <i className="bi bi-graph-up-arrow me-2"></i> Venta
-            </Nav.Link>
-
-            {/* COMPRA */}
-            <Nav.Link
-              onClick={() => manejarNavegacion("/compra")}
-              className={`d-flex align-items-center ${
-                esRutaActiva("/compra") ? "bg-white text-primary fw-bold shadow-sm" : "text-dark"
-              }`}
-              style={{
-                borderBottom: esRutaActiva("/compra") ? "3px solid #0d6efd" : "none",
-                padding: "0.6rem 1rem",
-                borderRadius: "0.375rem",
-                margin: "0.25rem 0",
-              }}
-            >
-              <i className="bi bi-basket-fill me-2"></i> Compra
-            </Nav.Link>
-
-            {/* PROVEEDOR */}
-            <Nav.Link
-              onClick={() => manejarNavegacion("/proveedor")}
-              className={`d-flex align-items-center ${
-                esRutaActiva("/proveedor") ? "bg-white text-primary fw-bold shadow-sm" : "text-dark"
-              }`}
-              style={{
-                borderBottom: esRutaActiva("/proveedor") ? "3px solid #0d6efd" : "none",
-                padding: "0.6rem 1rem",
-                borderRadius: "0.375rem",
-                margin: "0.25rem 0",
-              }}
-            >
-              <i className="bi bi-truck-front-fill me-2"></i> proveedor
-            </Nav.Link>
-
-            {/* PRODUCTO */}
-            <Nav.Link
-              onClick={() => manejarNavegacion("/producto")}
-              className={`d-flex align-items-center ${
-                esRutaActiva("/producto") ? "bg-white text-primary fw-bold shadow-sm" : "text-dark"
-              }`}
-              style={{
-                borderBottom: esRutaActiva("/producto") ? "3px solid #0d6efd" : "none",
-                padding: "0.6rem 1rem",
-                borderRadius: "0.375rem",
-                margin: "0.25rem 0",
-              }}
-            >
-              <i className="bi bi-box-fill me-2"></i> Producto
-            </Nav.Link>
+        <Offcanvas.Body className="p-0 bg-white">
+          <Nav className="flex-column w-100">
+            {menuItems.map((item) => (
+              <Nav.Link
+                key={item.ruta}
+                onClick={() => navegar(item.ruta)}
+                className={`d-flex align-items-center justify-content-start px-4 py-3 ${
+                  activo(item.ruta) ? "bg-primary text-white" : "text-dark"
+                }`}
+                style={{
+                  cursor: "pointer",
+                  fontWeight: activo(item.ruta) ? 600 : 500,
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <i className={`bi ${item.icono} fs-4 me-3`} style={{ width: 30 }}></i>
+                <span style={{ fontSize: "1.05rem" }}>{item.nombre}</span>
+              </Nav.Link>
+            ))}
           </Nav>
         </Offcanvas.Body>
-      </Navbar.Offcanvas>
-      {/* QUITÉ </Container> */}
-    </Navbar>
+      </Offcanvas>
+    </>
   );
 };
 
