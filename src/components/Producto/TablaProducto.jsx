@@ -16,6 +16,7 @@ const TablaProducto = ({
 
   const isMobile = useMediaQuery({ maxWidth: 767 });
 
+  // ORDENAMIENTO
   const manejarOrden = (campo) => {
     setOrden((prev) => ({
       campo,
@@ -25,8 +26,8 @@ const TablaProducto = ({
   };
 
   const productosOrdenados = [...productos].sort((a, b) => {
-    const A = a[orden.campo] ?? "";
-    const B = b[orden.campo] ?? "";
+    const A = a[orden.campo];
+    const B = b[orden.campo];
     if (typeof A === "number" && typeof B === "number") {
       return orden.direccion === "asc" ? A - B : B - A;
     }
@@ -35,12 +36,14 @@ const TablaProducto = ({
       : String(B).localeCompare(String(A));
   });
 
+  // PAGINACIÓN
   const totalElementos = productosOrdenados.length;
   const inicio = (paginaActual - 1) * elementosPorPagina;
   const productosPaginados = productosOrdenados.slice(inicio, inicio + elementosPorPagina);
 
-  const formatearFecha = (f) => (f ? new Date(f).toLocaleDateString("es-NI") : "-");
-  const formatearMoneda = (v) => `C$${(Number(v) || 0).toFixed(2)}`;
+  
+  const formatearFecha = (f) => new Date(f).toLocaleDateString("es-NI");
+  const formatearMoneda = (v) => `C$${Number(v).toFixed(2)}`;
 
   if (cargando) {
     return (
@@ -52,15 +55,19 @@ const TablaProducto = ({
   }
 
   if (productos.length === 0) {
-    return <p className="text-center text-muted fs-5">No hay productos registrados.</p>;
+    return <p className="text-center text-muted">No hay productos registrados.</p>;
   }
 
-  // VISTA MÓVIL - TARJETAS BLANCAS CON BORDE VERDE
+  // VISTA MÓVIL
   if (isMobile) {
     return (
-      <div className="px-2">
-        {/* SELECTOR DE ORDENAMIENTO */}
-        <div className="mb-4">
+      <div>
+        <h5 className="mb-3 text-center text-success fw-bold">
+          Lista de Productos
+        </h5>
+
+
+        <div className="mb-3">
           <select
             className="form-select form-select-sm shadow-sm"
             value={`${orden.campo}-${orden.direccion}`}
@@ -71,43 +78,35 @@ const TablaProducto = ({
             }}
           >
             <option value="id_Producto-asc">ID (menor a mayor)</option>
+            <option value="id_Producto-desc">ID (mayor a menor)</option>
             <option value="Nombre_Prod-asc">Nombre (A → Z)</option>
-            <option value="Existencia_Prod-desc">Más Existencia</option>
-            <option value="stock-desc">Más Stock</option>
-            <option value="Precio_Venta-desc">Más Caro</option>
-            <option value="Fe_caducidad-asc">Caduca Pronto</option>
+            <option value="Nombre_Prod-desc">Nombre (Z → A)</option>
+            <option value="Existencia_Prod-desc">Existencia (más stock)</option>
+            <option value="stock-desc">Stock (más)</option>
+            <option value="Precio_Venta-desc">Precio Venta (más caro)</option>
+            <option value="Fe_caducidad-asc">Caducidad (próxima)</option>
           </select>
         </div>
 
-        {/* PAGINACIÓN ARRIBA */}
-        <div className="d-flex justify-content-center mb-4">
-          <Paginacion
-            elementosPorPagina={elementosPorPagina}
-            totalElementos={totalElementos}
-            paginaActual={paginaActual}
-            establecerPaginaActual={setPaginaActual}
-          />
-        </div>
 
-        {/* TARJETAS */}
-        <div className="d-flex flex-column gap-4">
+        <div className="d-flex flex-column gap-3">
           {productosPaginados.map((p) => (
             <Card
               key={p.id_Producto}
-              className="shadow-lg border-0"
+              className="shadow-sm border-0"
               style={{
-                borderRadius: "18px",
-                background: "white",
-                border: "3px solid #28a745",
+                borderRadius: "15px",
+                background: "rgba(255, 255, 255, 0.97)",
+                border: "2px solid #0a8a28ff",
               }}
             >
-              <Card.Body className="p-4">
-                <div className="d-flex justify-content-between align-items-start mb-3">
+              <Card.Body className="p-3">
+                <div className="d-flex justify-content-between align-items-start mb-2">
                   <div>
-                    <h5 className="fw-bold text-success mb-1">#{p.id_Producto}</h5>
-                    <h6 className="fw-bold text-dark">{p.Nombre_Prod}</h6>
+                    <div className="fw-bold text-success fs-5">#{p.id_Producto}</div>
+                    <div className="fw-bold text-dark">{p.Nombre_Prod}</div>
                   </div>
-                  <div className="d-grid gap-2">
+                  <div className="d-grid gap-1">
                     <Button size="sm" variant="warning" onClick={() => abrirModalEdicion(p)}>
                       Editar
                     </Button>
@@ -117,47 +116,41 @@ const TablaProducto = ({
                   </div>
                 </div>
 
-                <hr className="border-success" />
+                <hr className="my-2 border-success" />
 
                 <div className="small">
-                  <div className="d-flex justify-content-between mb-2">
+                  <div className="d-flex justify-content-between mb-1">
                     <span className="text-muted">Tipo:</span>
-                    <span className="fw-bold text">{p.Tipo_Prod || "N/A"}</span>
+                    <span className="fw-bold">{p.Tipo_Prod}</span>
                   </div>
-                  <div className="d-flex justify-content-between mb-2">
+                  <div className="d-flex justify-content-between mb-1">
                     <span className="text-muted">Existencia:</span>
-                    <span className="fw-bold" style={{ color: "#1e7e34" }}>
-                      {p.Existencia_Prod || p.stock || 0}
-                    </span>
+                    <span className="fw-bold text-primary">{p.Existencia_Prod}</span>
                   </div>
-                  <div className="d-flex justify-content-between mb-2">
+                  <div className="d-flex justify-content-between mb-1">
                     <span className="text-muted">Stock:</span>
-                    <span className="fw-bold" style={{ color: "#1e7e34" }}>
-                      {p.stock || 0}
-                    </span>
+                    <span className="fw-bold text-primary">{p.stock}</span>
                   </div>
-                  <div className="d-flex justify-content-between mb-2">
+                  <div className="d-flex justify-content-between mb-1">
                     <span className="text-muted">Costo:</span>
-                    <span className="fw-bold text-secondary">{formatearMoneda(p.Precio_Costo)}</span>
+                    <span className="fw-bold text-success">{formatearMoneda(p.Precio_Costo)}</span>
                   </div>
-                  <div className="d-flex justify-content-between mb-2">
+                  <div className="d-flex justify-content-between mb-1">
                     <span className="text-muted">Venta:</span>
                     <span className="fw-bold text-success">{formatearMoneda(p.Precio_Venta)}</span>
                   </div>
-                  {p.Fe_caducidad && (
-                    <div className="d-flex justify-content-between">
-                      <span className="text-muted">Caducidad:</span>
-                      <span className="fw-bold text-danger">{formatearFecha(p.Fe_caducidad)}</span>
-                    </div>
-                  )}
+                  <div className="d-flex justify-content-between">
+                    <span className="text-muted">Caducidad:</span>
+                    <span className="fw-bold text-danger">{formatearFecha(p.Fe_caducidad)}</span>
+                  </div>
                 </div>
               </Card.Body>
             </Card>
           ))}
         </div>
 
-        {/* PAGINACIÓN ABAJO (opcional) */}
-        <div className="mt-4 d-flex justify-content-center">
+
+        <div className="mt-4">
           <Paginacion
             elementosPorPagina={elementosPorPagina}
             totalElementos={totalElementos}
@@ -169,11 +162,13 @@ const TablaProducto = ({
     );
   }
 
-  // VISTA ESCRITORIO (sin cambios)
+  // VISTA ESCRITORIO
   return (
-    // ... tu tabla de escritorio igual que antes
     <div>
-      <h5 className="mb-3 text-center text-success fw-bold">Lista de Productos</h5>
+      <h5 className="mb-3 text-center text-success fw-bold">
+        Lista de Productos
+      </h5>
+
       <div style={{ overflowX: "auto", borderRadius: "10px" }}>
         <Table striped bordered hover className="table-sm text-center align-middle">
           <thead className="table-success text-white">
@@ -183,8 +178,8 @@ const TablaProducto = ({
               <BotonOrden campo="Tipo_Prod" orden={orden} manejarOrden={manejarOrden}>Tipo</BotonOrden>
               <BotonOrden campo="Existencia_Prod" orden={orden} manejarOrden={manejarOrden}>Existencia</BotonOrden>
               <BotonOrden campo="stock" orden={orden} manejarOrden={manejarOrden}>Stock</BotonOrden>
-              <BotonOrden campo="Precio_Costo" orden={orden} manejarOrden={manejarOrden}>Costo</BotonOrden>
-              <BotonOrden campo="Precio_Venta" orden={orden} manejarOrden={manejarOrden}>Venta</BotonOrden>
+              <BotonOrden campo="Precio_Costo" orden={orden} manejarOrden={manejarOrden}>Precio Costo</BotonOrden>
+              <BotonOrden campo="Precio_Venta" orden={orden} manejarOrden={manejarOrden}>Precio Venta</BotonOrden>
               <BotonOrden campo="Fe_caducidad" orden={orden} manejarOrden={manejarOrden}>Caducidad</BotonOrden>
               <th className="bg-success text-white">Acciones</th>
             </tr>
@@ -194,9 +189,9 @@ const TablaProducto = ({
               <tr key={p.id_Producto}>
                 <td>{p.id_Producto}</td>
                 <td>{p.Nombre_Prod}</td>
-                <td>{p.Tipo_Prod || "-"}</td>
-                <td>{p.Existencia_Prod || p.stock || 0}</td>
-                <td>{p.stock || 0}</td>
+                <td>{p.Tipo_Prod}</td>
+                <td>{p.Existencia_Prod}</td>
+                <td>{p.stock}</td>
                 <td>{formatearMoneda(p.Precio_Costo)}</td>
                 <td>{formatearMoneda(p.Precio_Venta)}</td>
                 <td>{formatearFecha(p.Fe_caducidad)}</td>
@@ -224,4 +219,4 @@ const TablaProducto = ({
   );
 };
 
-export default TablaProducto;76
+export default TablaProducto;

@@ -1,23 +1,22 @@
 import { useEffect, useState } from "react";
-import { Container, Button, Row, Col } from "react-bootstrap";
+import { Container, Col, Row, Button } from "react-bootstrap";
 import TablaProductos from "../components/Producto/TablaProducto";
 import CuadroBusquedas from "../components/busquedas/CuadroBusquedas";
 import ModalRegistroProducto from "../components/Producto/ModalRegistroProducto";
 import ModalEdicionProducto from "../components/Producto/ModalEdicionProducto";
 import ModalEliminacionProducto from "../components/Producto/ModalEliminacionProducto";
-
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
 const fondoalmacenrural = "https://i.pinimg.com/736x/76/fb/4a/76fb4a687980c6b31824bc0752d66f10.jpg";
 
 const productosIniciales = [
-  { id_Producto: 1, Nombre_Prod: "Antipulgas Bravecto", Tipo_Prod: "Medicamento", stock: 15, Precio_Costo: 9800, Precio_Venta: 125000, Fe_caducidad: "2026-08-15" },
-  { id_Producto: 2, Nombre_Prod: "Vacuna Triple Felina", Tipo_Prod: "Vacuna", stock: 8, Precio_Costo: 55000, Precio_Venta: 75000 },
-  { id_Producto: 3, Nombre_Prod: "Shampoo Medicado", Tipo_Prod: "Higiene", stock: 30, Precio_Costo: 18000, Precio_Venta: 28000 },
-  { id_Producto: 4, Nombre_Prod: "Alimento Pro Plan 3kg", Tipo_Prod: "Alimento", stock: 12, Precio_Costo: 72000, Precio_Venta: 89000 },
-  { id_Producto: 5, Nombre_Prod: "Collar Isabelino", Tipo_Prod: "Accesorio", stock: 25, Precio_Costo: 9000, Precio_Venta: 15000 },
-  { id_Producto: 6, Nombre_Prod: "Desparasitante Milbemax", Tipo_Prod: "Medicamento", stock: 40, Precio_Costo: 28000, Precio_Venta: 38000, Fe_caducidad: "2026-06-30" },
+  { id_Producto: 1, Nombre_Prod: "Antipulgas Bravecto", Tipo_Prod: "Medicamento", Existencia_Prod: 15, stock: 15, Precio_Costo: 98000, Precio_Venta: 125000, Fe_caducidad: "2026-08-15" },
+  { id_Producto: 2, Nombre_Prod: "Vacuna Triple Felina", Tipo_Prod: "Vacuna", Existencia_Prod: 8, stock: 8, Precio_Costo: 55000, Precio_Venta: 75000, Fe_caducidad: "2025-12-10" },
+  { id_Producto: 3, Nombre_Prod: "Shampoo Medicado", Tipo_Prod: "Higiene", Existencia_Prod: 30, stock: 30, Precio_Costo: 18000, Precio_Venta: 28000, Fe_caducidad: "2027-03-20" },
+  { id_Producto: 4, Nombre_Prod: "Alimento Pro Plan 3kg", Tipo_Prod: "Alimento", Existencia_Prod: 12, stock: 12, Precio_Costo: 72000, Precio_Venta: 89000, Fe_caducidad: null },
+  { id_Producto: 5, Nombre_Prod: "Collar Isabelino", Tipo_Prod: "Accesorio", Existencia_Prod: 25, stock: 25, Precio_Costo: 9000, Precio_Venta: 15000, Fe_caducidad: null },
+  { id_Producto: 6, Nombre_Prod: "Desparasitante Milbemax", Tipo_Prod: "Medicamento", Existencia_Prod: 40, stock: 40, Precio_Costo: 28000, Precio_Venta: 38000, Fe_caducidad: "2026-06-30" },
 ];
 
 const Producto = () => {
@@ -27,15 +26,24 @@ const Producto = () => {
   const [textoBusqueda, setTextoBusqueda] = useState("");
   const [mostrarModal, setMostrarModal] = useState(false);
   const [nuevoProducto, setNuevoProducto] = useState({
-    Nombre_Prod: "", Tipo_Prod: "", stock: "", Precio_Costo: "", Precio_Venta: "", Fe_caducidad: ""
+    Nombre_Prod: "",
+    Tipo_Prod: "",
+    Existencia_Prod: "",
+    stock: "",
+    Precio_Costo: "",
+    Precio_Venta: "",
+    Fe_caducidad: "",
   });
   const [mostrarModalEdicion, setMostrarModalEdicion] = useState(false);
   const [productoEditado, setProductoEditado] = useState(null);
   const [mostrarModalEliminacion, setMostrarModalEliminacion] = useState(false);
   const [productoAEliminado, setProductoAEliminado] = useState(null);
+
+  // NUEVOS ESTADOS
+  const [mostrarTabla, setMostrarTabla] = useState(false);
   const [minimizado, setMinimizado] = useState(false);
 
-  // Cargar datos
+  // Cargar productos de localStorage o iniciales
   useEffect(() => {
     const guardados = localStorage.getItem("productosAlmacenRural");
     if (guardados) {
@@ -59,11 +67,17 @@ const Producto = () => {
   const manejarCambioBusqueda = (e) => {
     const texto = e.target.value.toLowerCase();
     setTextoBusqueda(texto);
-    const filtrados = productos.filter(p =>
-      p.Nombre_Prod.toLowerCase().includes(texto) ||
-      p.id_Producto.toString().includes(texto)
+    const filtrados = productos.filter(
+      (p) =>
+        p.Nombre_Prod.toLowerCase().includes(texto) ||
+        p.id_Producto.toString().includes(texto)
     );
     setProductosFiltrados(filtrados);
+  };
+
+  const manejarCambioInput = (e) => {
+    const { name, value } = e.target;
+    setNuevoProducto((prev) => ({ ...prev, [name]: value }));
   };
 
   const agregarProducto = () => {
@@ -71,6 +85,7 @@ const Producto = () => {
     const nuevo = {
       id_Producto: Date.now(),
       ...nuevoProducto,
+      Existencia_Prod: parseInt(nuevoProducto.Existencia_Prod) || 0,
       stock: parseInt(nuevoProducto.stock) || 0,
       Precio_Costo: parseFloat(nuevoProducto.Precio_Costo) || 0,
       Precio_Venta: parseFloat(nuevoProducto.Precio_Venta) || 0,
@@ -78,29 +93,40 @@ const Producto = () => {
     const actualizados = [...productos, nuevo];
     setProductos(actualizados);
     setProductosFiltrados(actualizados);
-    setNuevoProducto({ Nombre_Prod: "", Tipo_Prod: "", stock: "", Precio_Costo: "", Precio_Venta: "", Fe_caducidad: "" });
+    setNuevoProducto({
+      Nombre_Prod: "",
+      Tipo_Prod: "",
+      Existencia_Prod: "",
+      stock: "",
+      Precio_Costo: "",
+      Precio_Venta: "",
+      Fe_caducidad: "",
+    });
     setMostrarModal(false);
   };
 
-  const abrirModalEdicion = (p) => {
-    setProductoEditado({ ...p });
+  const abrirModalEdicion = (producto) => {
+    setProductoEditado({ ...producto });
     setMostrarModalEdicion(true);
   };
 
   const guardarEdicion = () => {
-    const actualizados = productos.map(p => p.id_Producto === productoEditado.id_Producto ? productoEditado : p);
+    if (!productoEditado?.Nombre_Prod?.trim()) return;
+    const actualizados = productos.map((p) =>
+      p.id_Producto === productoEditado.id_Producto ? productoEditado : p
+    );
     setProductos(actualizados);
     setProductosFiltrados(actualizados);
     setMostrarModalEdicion(false);
   };
 
-  const abrirModalEliminacion = (p) => {
-    setProductoAEliminado(p);
+  const abrirModalEliminacion = (producto) => {
+    setProductoAEliminado(producto);
     setMostrarModalEliminacion(true);
   };
 
   const confirmarEliminacion = () => {
-    const actualizados = productos.filter(p => p.id_Producto !== productoAEliminado.id_Producto);
+    const actualizados = productos.filter((p) => p.id_Producto !== productoAEliminado.id_Producto);
     setProductos(actualizados);
     setProductosFiltrados(actualizados);
     setMostrarModalEliminacion(false);
@@ -114,113 +140,180 @@ const Producto = () => {
       { header: "ID", key: "id", width: 10 },
       { header: "Nombre", key: "nombre", width: 30 },
       { header: "Tipo", key: "tipo", width: 15 },
-      { header: "Stock", key: "stock", width: 12 },
+      { header: "Stock", key: "stock", width: 10 },
+      { header: "Precio Costo", key: "costo", width: 15 },
       { header: "Precio Venta", key: "venta", width: 15 },
+      { header: "Caducidad", key: "fecha", width: 15 },
     ];
-    productosFiltrados.forEach(p => {
+    productosFiltrados.forEach((p) => {
       sheet.addRow({
         id: p.id_Producto,
         nombre: p.Nombre_Prod,
         tipo: p.Tipo_Prod || "-",
         stock: p.stock || 0,
-        venta: `C$${Number(p.Precio_Venta || 0).toFixed(2)}`,
+        costo: `C$${parseFloat(p.Precio_Costo || 0).toFixed(2)}`,
+        venta: `C$${parseFloat(p.Precio_Venta || 0).toFixed(2)}`,
+        fecha: p.Fe_caducidad || "-",
       });
     });
     sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
     sheet.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF28A745" } };
     const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), `Reporte_Productos_${new Date().toISOString().split("T")[0]}.xlsx`);
+    const blob = new Blob([buffer], { type: "application/octet-stream" });
+    saveAs(blob, `Reporte_Productos_${new Date().toISOString().split("T")[0]}.xlsx`);
   };
 
   return (
-    <div style={{
-      backgroundImage: `url(${fondoalmacenrural})`,
-      backgroundSize: "cover",
-      backgroundPosition: "center",
-      backgroundAttachment: "fixed",
-      minHeight: "100vh",
-      padding: "70px 10px 20px",
-    }}>
-      <Container fluid className="px-3">
-        <div className="bg-white rounded-4 shadow-lg p-4 position-relative" style={{
-          maxWidth: "100%",
-          border: "4px solid #28a745",
-          borderRadius: "20px",
-        }}>
-          {/* Botón X */}
-          <Button
-            variant="danger"
-            size="sm"
-            className="position-absolute top-0 end-0 m-3 rounded-circle"
-            style={{ width: "40px", height: "40px", zIndex: 10 }}
-            onClick={() => setMinimizado(true)}
-          >X</Button>
+    <div
+      style={{
+        backgroundImage: `url(${fondoalmacenrural})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
+        minHeight: "100vh",
+        width: "100vw",
+        margin: 0,
+        padding: 0,
+        position: "fixed",
+        top: 0,
+        left: 0,
+        overflow: "auto",
+      }}
+    >
+      <Container style={{ minHeight: "100vh", padding: "20px" }}>
+        
+        {/* PANEL DE INFORMACIÓN */}
+        {!mostrarTabla && (
+          <div
+            style={{
+              position: "fixed",
+              top: "20%",
+              left: "50%",
+              transform: "translate(-50%, 0)",
+              backgroundColor: "white",
+              borderRadius: "15px",
+              padding: "20px 25px",
+              boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+              zIndex: 2000,
+              textAlign: "center",
+              maxWidth: "90%",
+              width: "360px"
+            }}
+          >
+            <h5 className="mb-3 fw-bold text-success">Información</h5>
+            <p>Esta tabla está relacionada con la entidad <strong>Productos</strong>. Aquí podrás ver, registrar y editar los productos existentes.</p>
 
-          <h4 className="text-center mb-4 fw-bold text-success fs-5">
-            Registro de Productos
-          </h4>
+            <Button
+              variant="success"
+              className="fw-bold"
+              style={{ marginTop: "10px", width: "100%" }}
+              onClick={() => {
+                setMinimizado(false);
+                setMostrarTabla(true);
+              }}
+            >
+              Ver Tabla de Productos
+            </Button>
+          </div>
+        )}
 
-          {/* Búsqueda + Botones */}
-          <Row className="g-3 mb-4">
-            <Col xs={12}>
-              <CuadroBusquedas
-                textoBusqueda={textoBusqueda}
-                manejarCambioBusqueda={manejarCambioBusqueda}
-              />
-            </Col>
-            <Col xs={12} className="d-flex gap-2">
-              <Button variant="success" className="flex-fill py-3 fw-bold" onClick={() => setMostrarModal(true)}>
-                + Nuevo
-              </Button>
-              <Button variant="info" className="flex-fill py-3 fw-bold text-white" onClick={generarReporteExcel}>
-                Reporte
-              </Button>
-            </Col>
-          </Row>
+        {/* TABLA */}
+        {mostrarTabla && (
+          <div
+            className="position-relative p-3 shadow-lg"
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.95)",
+              width: "95%",
+              maxWidth: "750px",
+              margin: "50px auto 20px",
+              border: "1.5px solid #28a745",
+              borderRadius: "25px",
+              backdropFilter: "blur(8px)",
+              transition: "all 0.3s ease",
+              transform: minimizado ? "scale(0)" : "scale(1)",
+              opacity: minimizado ? 0 : 1,
 
-          {/* TABLA CON PAGINACIÓN ARRIBA */}
-          <div style={{ minHeight: "55vh" }}>
-            <TablaProductos
-              productos={productosFiltrados}
-              cargando={cargando}
-              abrirModalEdicion={abrirModalEdicion}
-              abrirModalEliminacion={abrirModalEliminacion}
+              // MEJORAS PARA TELÉFONOS
+              padding: "15px",
+              maxHeight: "85vh",
+              overflowY: "auto"
+            }}
+          >
+            {/* BOTÓN X */}
+            <Button
+              variant="danger"
+              size="sm"
+              className="position-absolute top-0 end-0 m-2"
+              style={{ zIndex: 10, borderRadius: "50%", width: "36px", height: "36px" }}
+              onClick={() => {
+                setMinimizado(true);
+                setMostrarTabla(false);
+              }}
+            >
+              X
+            </Button>
+
+            <h4 className="text-center mb-4 fw-bold text-success">Registro de Productos</h4>
+
+            <Row className="mb-3 align-items-center">
+              <Col xs={12} md={7} className="mb-2">
+                <CuadroBusquedas textoBusqueda={textoBusqueda} manejarCambioBusqueda={manejarCambioBusqueda} />
+              </Col>
+              <Col xs={12} md={5} className="d-flex justify-content-end gap-2 mb-2">
+                <Button variant="success" className="fw-bold" onClick={() => setMostrarModal(true)}>
+                  + Nuevo
+                </Button>
+                <Button variant="info" className="fw-bold text-white" onClick={generarReporteExcel}>
+                  Reporte
+                </Button>
+              </Col>
+            </Row>
+
+            <div
+              style={{
+                maxHeight: "55vh",
+                overflowY: "auto",
+                overflowX: "auto",
+                WebkitOverflowScrolling: "touch"
+              }}
+            >
+              <div style={{ minWidth: "300px", width: "100%" }}>
+                <TablaProductos
+                  productos={productosFiltrados}
+                  cargando={cargando}
+                  abrirModalEdicion={abrirModalEdicion}
+                  abrirModalEliminacion={abrirModalEliminacion}
+                />
+              </div>
+            </div>
+
+            <ModalRegistroProducto
+              mostrarModal={mostrarModal}
+              setMostrarModal={setMostrarModal}
+              nuevoProducto={nuevoProducto}
+              setNuevoProducto={setNuevoProducto}
+              manejarCambioInput={manejarCambioInput}
+              agregarProducto={agregarProducto}
+            />
+
+            <ModalEdicionProducto
+              mostrar={mostrarModalEdicion}
+              setMostrar={setMostrarModalEdicion}
+              productoEditado={productoEditado}
+              setProductoEditado={setProductoEditado}
+              guardarEdicion={guardarEdicion}
+            />
+
+            <ModalEliminacionProducto
+              mostrar={mostrarModalEliminacion}
+              setMostrar={setMostrarModalEliminacion}
+              productoEliminado={productoAEliminado}
+              confirmarEliminacion={confirmarEliminacion}
             />
           </div>
-        </div>
-
-        {/* Botón flotante minimizado */}
-        {minimizado && (
-          <Button
-            variant="success"
-            className="position-fixed bottom-0 end-0 m-4 rounded-circle shadow-lg"
-            style={{ width: "70px", height: "70px", fontSize: "32px", zIndex: 1000 }}
-            onClick={() => setMinimizado(false)}
-          >+</Button>
         )}
       </Container>
-
-      {/* MODALES */}
-      <ModalRegistroProducto
-        mostrarModal={mostrarModal}
-        setMostrarModal={setMostrarModal}
-        nuevoProducto={nuevoProducto}
-        setNuevoProducto={setNuevoProducto}
-        agregarProducto={agregarProducto}
-      />
-      <ModalEdicionProducto
-        mostrar={mostrarModalEdicion}
-        setMostrar={setMostrarModalEdicion}
-        productoEditado={productoEditado}
-        setProductoEditado={setProductoEditado}
-        guardarEdicion={guardarEdicion}
-      />
-      <ModalEliminacionProducto
-        mostrar={mostrarModalEliminacion}
-        setMostrar={setMostrarModalEliminacion}
-        productoEliminado={productoAEliminado}
-        confirmarEliminacion={confirmarEliminacion}
-      />
     </div>
   );
 };

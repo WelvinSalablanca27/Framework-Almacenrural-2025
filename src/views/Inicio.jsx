@@ -1,132 +1,130 @@
-import React, { useState } from "react";
-import { Card, Form, Button, Alert, Nav } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+import React from "react";
+import { Container, Row, Col, Card } from "react-bootstrap";
+import { Link } from "react-router-dom";
+import {
+  FaUsers,
+  FaUserCog,
+  FaBoxOpen,
+  FaTruck,
+  FaCashRegister,
+  FaShoppingCart,
+} from "react-icons/fa";
 
-// Usuario administrador
-const usuarioAdmin = {
-  nombre: "Administrador",
-  password: "SistemaRural2025!",
-  secciones: ["Cliente", "Usuario", "Producto", "Proveedor", "Venta", "Compra"],
-};
+const secciones = [
+  { nombre: "Cliente", color: "#0d6efd", icono: FaUsers, ruta: "/cliente" },
+  { nombre: "Usuario", color: "#6f42c1", icono: FaUserCog, ruta: "/usuario" },
+  { nombre: "Producto", color: "#fd7e14", icono: FaBoxOpen, ruta: "/producto" },
+  { nombre: "Proveedor", color: "#20c997", icono: FaTruck, ruta: "/proveedor" },
+  { nombre: "Venta", color: "#dc3545", icono: FaCashRegister, ruta: "/venta" },
+  { nombre: "Compra", color: "#ffc107", icono: FaShoppingCart, ruta: "/compra" },
+];
+
+const fondoalmacenrural =
+  "https://i.pinimg.com/736x/76/fb/4a/76fb4a687980c6b31824bc0752d66f10.jpg";
 
 const Inicio = () => {
-  const [usuario, setUsuario] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [logueado, setLogueado] = useState(false);
-
-  const navigate = useNavigate();
-
-  const manejarLogin = (e) => {
-    e.preventDefault();
-    setError("");
-
-    if (!usuario || !password) {
-      setError("Por favor complete todos los campos");
-      return;
-    }
-
-    if (usuario === usuarioAdmin.nombre && password === usuarioAdmin.password) {
-      setLogueado(true);
-    } else {
-      setError("Usuario o contraseña incorrectos");
-    }
-  };
-
-  const manejarLogout = () => {
-    setLogueado(false);
-    setUsuario("");
-    setPassword("");
-  };
-
-  if (!logueado) {
-    return (
+  return (
+    <div
+      style={{
+        width: "100vw",
+        height: "100vh",
+        backgroundImage: `url(${fondoalmacenrural})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        overflow: "hidden",
+        position: "fixed",
+        top: 0,
+        left: 0,
+      }}
+    >
+      {/* Capa semitransparente con blur */}
       <div
         style={{
-          position: "fixed",
+          position: "absolute",
           top: 0,
           left: 0,
-          width: "100vw",
-          height: "100vh",
+          width: "100%",
+          height: "100%",
+          backgroundColor: "rgba(0,0,0,0.35)",
+          backdropFilter: "blur(4px)",
+          zIndex: 0,
+        }}
+      ></div>
+
+      {/* Contenido */}
+      <Container
+        style={{
+          position: "relative",
+          zIndex: 1,
           display: "flex",
-          justifyContent: "center",
+          flexDirection: "column",
           alignItems: "center",
-          backgroundColor: "#f8f9fa",
         }}
       >
-        <Card
+        <h1
+          className="fw-bold mb-4 text-center"
           style={{
-            width: 450,
-            padding: 30,
-            borderRadius: 16,
-            boxShadow: "0 12px 32px rgba(0,0,0,0.12)",
-            backgroundColor: "white",
+            fontSize: "2.5rem",
+            color: "#47ff78ff",
+            textShadow: "2px 2px 8px rgba(0,0,0,0.5)",
           }}
         >
-          <div className="text-center mb-4">
-            <img
-              src="https://i.pinimg.com/736x/76/fb/4a/76fb4a687980c6b31824bc0752d66f10.jpg"
-              alt="logo"
-              style={{ width: 80, height: 80, borderRadius: 16 }}
-            />
-            <h3 className="mt-3">Veterinaria Almacen Rural</h3>
-          </div>
+          Veterinaria Almacén Rural
+        </h1>
 
-          {error && <Alert variant="danger">{error}</Alert>}
-
-          <Form onSubmit={manejarLogin}>
-            <Form.Group className="mb-3">
-              <Form.Label>Usuario</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Ingrese su usuario"
-                value={usuario}
-                onChange={(e) => setUsuario(e.target.value)}
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Contraseña</Form.Label>
-              <Form.Control
-                type="password"
-                placeholder="Ingrese su contraseña"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </Form.Group>
-
-            <Button type="submit" className="w-100 mb-2" size="lg">
-              Iniciar sesión
-            </Button>
-          </Form>
-
-          <div className="text-center mt-3" style={{ fontSize: ".85rem", color: "#6b7280" }}>
-            Acceso seguro • Solo personal autorizado
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  // Panel con todas las secciones
-  return (
-    <div style={{ padding: 30 }}>
-      <h2>Bienvenido, {usuarioAdmin.nombre}</h2>
-      <Button variant="danger" className="mb-3" onClick={manejarLogout}>
-        Cerrar sesión
-      </Button>
-
-      <Nav variant="tabs">
-        {usuarioAdmin.secciones.map((sec) => (
-          <Nav.Item key={sec}>
-            <Nav.Link onClick={() => navigate(`/${sec.toLowerCase()}`)}>{sec}</Nav.Link>
-          </Nav.Item>
-        ))}
-      </Nav>
-
-      <div style={{ marginTop: 20 }}>
-        <p>Seleccione una sección para trabajar.</p>
-      </div>
+        <Row className="g-3 justify-content-center">
+          {secciones.map((sec, idx) => {
+            const Icon = sec.icono;
+            return (
+              <Col
+                key={idx}
+                xs={6}
+                sm={4}
+                md={3}
+                lg={2}
+                className="d-flex justify-content-center"
+              >
+                <Link to={sec.ruta} style={{ textDecoration: "none", width: "100%" }}>
+                  <Card
+                    className="text-center shadow"
+                    style={{
+                      borderRadius: "15px",
+                      width: "100%",
+                      padding: "15px",
+                      background: "rgba(255,255,255,0.95)",
+                      border: "none",
+                      cursor: "pointer",
+                      transition: "all 0.3s ease",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      minHeight: "100px",
+                      boxShadow: "0 6px 15px rgba(0,0,0,0.15)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-5px) scale(1.05)";
+                      e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.25)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0) scale(1)";
+                      e.currentTarget.style.boxShadow = "0 6px 15px rgba(0,0,0,0.15)";
+                    }}
+                  >
+                    <Icon size={45} color={sec.color} className="mb-2" />
+                    <h6 className="fw-bold" style={{ color: "#222" }}>
+                      {sec.nombre}
+                    </h6>
+                  </Card>
+                </Link>
+              </Col>
+            );
+          })}
+        </Row>
+      </Container>
     </div>
   );
 };
