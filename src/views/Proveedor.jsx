@@ -48,7 +48,7 @@ const Proveedor = () => {
     // -----------------------------
     const obtenerProveedores = async () => {
         try {
-            const respuesta = await fetch("http://localhost:3001/api/proveedores");
+            const respuesta = await fetch("http://localhost:3000/api/proveedores");
             if (!respuesta.ok) throw new Error("Error al obtener proveedores");
             const datos = await respuesta.json();
             setProveedores(datos);
@@ -83,7 +83,7 @@ const Proveedor = () => {
     const agregarProveedor = async () => {
         if (!nuevoProveedor.Nombre_Proveedor.trim()) return;
         try {
-            const respuesta = await fetch("http://localhost:3001/api/registrarProveedor", {
+            const respuesta = await fetch("http://localhost:3000/api/registrarProveedor", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(nuevoProveedor),
@@ -116,7 +116,7 @@ const Proveedor = () => {
         if (!proveedorEditado?.Nombre_Proveedor?.trim()) return;
         try {
             const respuesta = await fetch(
-                `http://localhost:3001/api/actualizarProveedor/${proveedorEditado.id_Proveedor}`,
+                `http://localhost:3000/api/actualizarProveedor/${proveedorEditado.id_Proveedor}`,
                 {
                     method: "PATCH",
                     headers: { "Content-Type": "application/json" },
@@ -140,7 +140,7 @@ const Proveedor = () => {
     const confirmarEliminacion = async () => {
         try {
             const respuesta = await fetch(
-                `http://localhost:3001/api/eliminarProveedor/${proveedorAEliminar.id_Proveedor}`,
+                `http://localhost:3000/api/eliminarProveedor/${proveedorAEliminar.id_Proveedor}`,
                 { method: "DELETE" }
             );
             if (!respuesta.ok) throw new Error("Error al eliminar");

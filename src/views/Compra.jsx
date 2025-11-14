@@ -127,7 +127,7 @@ const Compras = () => {
     const doc = new jsPDF();
     let detalles = [];
     try {
-      const resp = await fetch('http://localhost:3001/api/DetallesCompra');
+      const resp = await fetch('http://localhost:3000/api/DetallesCompra');
       const todos = await resp.json();
       detalles = todos.filter(d => d.id_compra === compra.id_compra);
     } catch (error) {
@@ -199,7 +199,7 @@ const Compras = () => {
     for (const c of compras) {
       let detalles = [];
       try {
-        const resp = await fetch('http://localhost:3001/api/DetallesCompra');
+        const resp = await fetch('http://localhost:3000/api/DetallesCompra');
         const todos = await resp.json();
         detalles = todos.filter(d => d.id_compra === c.id_compra);
       } catch (error) {
@@ -244,7 +244,7 @@ const Compras = () => {
   const obtenerNombreProveedor = async (idProveedor) => {
     if (!idProveedor) return '—';
     try {
-      const resp = await fetch(`http://localhost:3001/api/proveedor/${idProveedor}`);
+      const resp = await fetch(`http://localhost:3000/api/proveedor/${idProveedor}`);
       if (!resp.ok) return '—';
       const data = await resp.json();
       return data.Nombre_Proveedor || data.nombre_proveedor || '—';
@@ -257,7 +257,7 @@ const Compras = () => {
   const obtenerNombreProducto = async (idProducto) => {
     if (!idProducto) return '—';
     try {
-      const resp = await fetch(`http://localhost:3001/api/producto/${idProducto}`);
+      const resp = await fetch(`http://localhost:3000/api/producto/${idProducto}`);
       if (!resp.ok) return '—';
       const data = await resp.json();
       return data.nombre_producto || data.Nombre_Prod || '—';
@@ -269,7 +269,7 @@ const Compras = () => {
 
   const obtenerCompras = async () => {
     try {
-      const resp = await fetch('http://localhost:3001/api/compras');
+      const resp = await fetch('http://localhost:3000/api/compras');
       if (!resp.ok) throw new Error('Error al cargar compras');
       const comprasRaw = await resp.json();
 
@@ -293,7 +293,7 @@ const Compras = () => {
 
   const obtenerDetallesCompra = async (id_compra) => {
     try {
-      const resp = await fetch('http://localhost:3001/api/DetallesCompra');
+      const resp = await fetch('http://localhost:3000/api/DetallesCompra');
       if (!resp.ok) throw new Error('Error al cargar detalles');
       const todos = await resp.json();
       const filtrados = todos.filter(d => d.id_compra === parseInt(id_compra));
@@ -317,7 +317,7 @@ const Compras = () => {
 
   const obtenerProveedores = async () => {
     try {
-      const resp = await fetch('http://localhost:3001/api/proveedores');
+      const resp = await fetch('http://localhost:3000/api/proveedores');
       if (!resp.ok) throw new Error('Error al cargar proveedores');
       const datos = await resp.json();
       setProveedores(datos);
@@ -328,7 +328,7 @@ const Compras = () => {
 
   const obtenerProductos = async () => {
     try {
-      const resp = await fetch('http://localhost:3001/api/producto');
+      const resp = await fetch('http://localhost:3000/api/producto');
       if (!resp.ok) throw new Error('Error al cargar productos');
       const datos = await resp.json();
       setProductos(datos);
@@ -355,7 +355,7 @@ const Compras = () => {
     }
 
     try {
-      const compraResp = await fetch('http://localhost:3001/api/registrarcompra', {
+      const compraResp = await fetch('http://localhost:3000/api/registrarcompra', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(nuevaCompra)
@@ -365,7 +365,7 @@ const Compras = () => {
       const { id_compra } = await compraResp.json();
 
       for (const d of detallesNuevos) {
-        await fetch('http://localhost:3001/api/registrarDetalleCompra', {
+        await fetch('http://localhost:3000/api/registrarDetalleCompra', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...d, id_compra })
@@ -390,7 +390,7 @@ const Compras = () => {
       Fe_compra: new Date(compra.Fe_compra).toISOString().split("T")[0]
     });
 
-    const resp = await fetch('http://localhost:3001/api/DetallesCompra');
+    const resp = await fetch('http://localhost:3000/api/DetallesCompra');
     const todos = await resp.json();
     const detallesRaw = todos.filter(d => d.id_compra === compra.id_compra);
 
@@ -411,7 +411,7 @@ const Compras = () => {
 
   const actualizarCompra = async () => {
     try {
-      await fetch(`http://localhost:3001/api/actualizarcompra/${compraAEditar.id_compra}`, {
+      await fetch(`http://localhost:3000/api/actualizarcompra/${compraAEditar.id_compra}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(compraEnEdicion)
@@ -422,11 +422,11 @@ const Compras = () => {
       const actuales = todos.filter(d => d.id_compra === compraAEditar.id_compra);
 
       for (const d of actuales) {
-        await fetch(`http://localhost:3001/api/eliminarDetalleCompra/${d.id_DetalleCompra}`, { method: 'DELETE' });
+        await fetch(`http://localhost:3000/api/eliminarDetalleCompra/${d.id_DetalleCompra}`, { method: 'DELETE' });
       }
 
       for (const d of detallesNuevos) {
-        await fetch('http://localhost:3001/api/registrarDetalleCompra', {
+        await fetch('http://localhost:3000/api/registrarDetalleCompra', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...d, id_compra: compraAEditar.id_compra })
