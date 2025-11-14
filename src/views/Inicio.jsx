@@ -1,6 +1,6 @@
 import React from "react";
 import { Container, Row, Col, Card, Button } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   FaUsers,
   FaUserCog,
@@ -22,7 +22,17 @@ const secciones = [
 
 const fondoalmacenrural = "https://i.pinimg.com/736x/76/fb/4a/76fb4a687980c6b31824bc0752d66f10.jpg";
 
-const Inicio = ({ cerrarSesion }) => {
+const Inicio = ({ setUsuarioLogueado }) => {
+  const navigate = useNavigate();
+
+  const cerrarSesion = () => {
+    if (window.confirm("¿Desea cerrar sesión?")) {
+      setUsuarioLogueado(null); // Limpiar estado del usuario
+      localStorage.removeItem("usuarioLogueado"); // Si usas localStorage
+      navigate("/login"); // Redirigir al login
+    }
+  };
+
   return (
     <div
       style={{
@@ -40,36 +50,6 @@ const Inicio = ({ cerrarSesion }) => {
         left: 0,
       }}
     >
-      {/* Botón Cerrar sesión con icono y hover */}
-      <Button
-        onClick={cerrarSesion}
-        style={{
-          position: "fixed",
-          top: "15px",
-          right: "15px",
-          zIndex: 1000,
-          borderRadius: "8px",
-          fontWeight: "bold",
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-          backgroundColor: "#dc3545",
-          borderColor: "#dc3545",
-          transition: "all 0.2s ease",
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = "#c82333";
-          e.currentTarget.style.transform = "scale(1.05)";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = "#dc3545";
-          e.currentTarget.style.transform = "scale(1)";
-        }}
-      >
-        <FaSignOutAlt />
-        Cerrar sesión
-      </Button>
-
       {/* Capa semitransparente con blur */}
       <div
         style={{

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Navbar, Offcanvas, Nav } from "react-bootstrap";
+import { Navbar, Offcanvas, Nav, Button } from "react-bootstrap";
 
 const Encabezado = ({ usuarioLogueado, manejarLogout }) => {
   const navigate = useNavigate();
@@ -33,7 +33,7 @@ const Encabezado = ({ usuarioLogueado, manejarLogout }) => {
       <Navbar bg="primary" variant="dark" fixed="top" className="shadow-sm" style={{ height: "56px" }}>
         <div className="container-fluid position-relative d-flex align-items-center px-3">
 
-          {/* Flecha atrás estilo Google */}
+          {/* Flecha atrás */}
           <span
             onClick={() => navigate(-1)}
             style={{
@@ -62,15 +62,11 @@ const Encabezado = ({ usuarioLogueado, manejarLogout }) => {
             </svg>
           </span>
 
-
           {/* Título centrado */}
           <Navbar.Brand
             onClick={() => navegar("/")}
             className="fw-bold text-white mx-auto text-center d-flex align-items-center justify-content-center"
-            style={{
-              cursor: "pointer",
-              fontSize: "1.35rem",
-            }}
+            style={{ cursor: "pointer", fontSize: "1.35rem" }}
           >
             <i className="bi bi-shop-window me-2 d-inline-block" style={{ fontSize: "1.35rem" }}></i>
             <span className="d-inline-block">Almacén Rural</span>
@@ -85,16 +81,6 @@ const Encabezado = ({ usuarioLogueado, manejarLogout }) => {
             <i className="bi bi-list fs-3"></i>
           </button>
         </div>
-
-        {/* Estilos responsivos */}
-        <style jsx>{`
-          @media (max-width: 576px) {
-            .navbar-brand span,
-            .navbar-brand i {
-              font-size: 1rem !important;
-            }
-          }
-        `}</style>
       </Navbar>
 
       <Offcanvas show={show} onHide={() => setShow(false)} placement="end" style={{ width: "280px" }}>
@@ -104,25 +90,36 @@ const Encabezado = ({ usuarioLogueado, manejarLogout }) => {
           </Offcanvas.Title>
         </Offcanvas.Header>
 
-        <Offcanvas.Body className="p-0 bg-white">
-          <Nav className="flex-column w-100">
-            {menuItems.map((item) => (
-              <Nav.Link
-                key={item.ruta}
-                onClick={() => navegar(item.ruta)}
-                className={`d-flex align-items-center justify-content-start px-4 py-3 ${activo(item.ruta) ? "bg-primary text-white" : "text-dark"
-                  }`}
-                style={{
-                  cursor: "pointer",
-                  fontWeight: activo(item.ruta) ? 600 : 500,
-                  transition: "all 0.2s ease",
-                }}
-              >
-                <i className={`bi ${item.icono} fs-4 me-3`} style={{ width: 30 }}></i>
-                <span style={{ fontSize: "1.05rem" }}>{item.nombre}</span>
-              </Nav.Link>
-            ))}
-          </Nav>
+        <Offcanvas.Body className="p-0 bg-white d-flex flex-column justify-content-between" style={{ height: "100%" }}>
+          <div>
+            <Nav className="flex-column w-100">
+              {menuItems.map((item) => (
+                <Nav.Link
+                  key={item.ruta}
+                  onClick={() => navegar(item.ruta)}
+                  className={`d-flex align-items-center justify-content-start px-4 py-3 ${activo(item.ruta) ? "bg-primary text-white" : "text-dark"}`}
+                  style={{ cursor: "pointer", fontWeight: activo(item.ruta) ? 600 : 500, transition: "all 0.2s ease" }}
+                >
+                  <i className={`bi ${item.icono} fs-4 me-3`} style={{ width: 30 }}></i>
+                  <span style={{ fontSize: "1.05rem" }}>{item.nombre}</span>
+                </Nav.Link>
+              ))}
+            </Nav>
+          </div>
+
+          {/* Botón Cerrar sesión abajo */}
+          <div className="px-3 pb-3">
+            <Button
+              variant="danger"
+              className="w-100 d-flex align-items-center justify-content-center"
+              style={{ gap: "6px", fontWeight: "bold" }}
+              onClick={manejarLogout}
+              onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.03)"}
+              onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+            >
+              <i className="bi bi-box-arrow-right"></i> Cerrar sesión
+            </Button>
+          </div>
         </Offcanvas.Body>
       </Offcanvas>
     </>

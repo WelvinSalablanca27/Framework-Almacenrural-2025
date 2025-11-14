@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Encabezado from "./components/navegacion/Encabezado";
 
@@ -13,27 +13,51 @@ import Producto from "./views/Producto";
 
 import "./App.css";
 
-const App = () => {
-  // Inicializamos desde localStorage si existe
-  const [usuarioLogueado, setUsuarioLogueado] = useState(() => {
-    const usuario = localStorage.getItem("usuarioLogueado");
-    return usuario ? JSON.parse(usuario) : null;
-  });
 
+// ========================================
+//   RUTAS (con protección y carga inicial)
+// ========================================
+const AppRutas = ({ usuarioLogueado, setUsuarioLogueado }) => {
+  const navigate = useNavigate();
+  const [cargando, setCargando] = useState(true); // <-- evita parpadeos
+
+  // Validar sesión solo una vez al cargar la app
+  useEffect(() => {
+    const usuario = localStorage.getItem("usuarioLogueado");
+
+    if (usuario) {
+      setUsuarioLogueado(JSON.parse(usuario));
+      navigate("/", { replace: true }); // siempre Inicio
+    }
+
+    // Termina carga y habilita rutas
+    setTimeout(() => setCargando(false), 150);
+  }, []);
+
+  // Cerrar sesión profesional
   const manejarLogout = () => {
-    setUsuarioLogueado(null);
     localStorage.removeItem("usuarioLogueado");
+    setUsuarioLogueado(null);
+    navigate("/login", { replace: true });
   };
 
-  // Guardar cambios de usuarioLogueado en localStorage
-  useEffect(() => {
-    if (usuarioLogueado) {
-      localStorage.setItem("usuarioLogueado", JSON.stringify(usuarioLogueado));
-    }
-  }, [usuarioLogueado]);
+  // ============================
+  //  Pantalla blanca mientras carga
+  // ============================
+  if (cargando) {
+    return (
+      <div
+        style={{
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "#fff",
+        }}
+      ></div>
+    );
+  }
 
   return (
-    <Router>
+    <>
       {usuarioLogueado && (
         <Encabezado
           usuarioLogueado={usuarioLogueado}
@@ -44,10 +68,10 @@ const App = () => {
       <main className="margen-superior-main">
         <Routes>
           {!usuarioLogueado ? (
-            <Route
-              path="*"
-              element={<Login setUsuarioLogueado={setUsuarioLogueado} />}
-            />
+            <>
+              <Route path="/login" element={<Login setUsuarioLogueado={setUsuarioLogueado} />} />
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </>
           ) : (
             <>
               <Route path="/" element={<Inicio />} />
@@ -57,11 +81,25 @@ const App = () => {
               <Route path="/compra" element={<Compra />} />
               <Route path="/proveedor" element={<Proveedor />} />
               <Route path="/producto" element={<Producto />} />
-              <Route path="*" element={<h2>404 - Página no encontrada</h2>} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </>
           )}
         </Routes>
       </main>
+    </>
+  );
+};
+
+
+// ============================
+//      APP PRINCIPAL
+// ============================
+const App = () => {
+  const [usuarioLogueado, setUsuarioLogueado] = useState(null);
+
+  return (
+    <Router>
+      <AppRutas usuarioLogueado={usuarioLogueado} setUsuarioLogueado={setUsuarioLogueado} />
     </Router>
   );
 };

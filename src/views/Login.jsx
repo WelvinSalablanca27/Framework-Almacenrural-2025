@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Card, Form, Button, Alert, Spinner } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 
 const usuarioAdmin = {
   nombre: "Administrador",
@@ -12,6 +13,7 @@ const fondoalmacenrural =
   "https://i.pinimg.com/736x/76/fb/4a/76fb4a687980c6b31824bc0752d66f10.jpg";
 
 const Login = ({ setUsuarioLogueado }) => {
+  const navigate = useNavigate();
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -25,6 +27,7 @@ const Login = ({ setUsuarioLogueado }) => {
     setTimeout(() => {
       if (correo === usuarioAdmin.correo && password === usuarioAdmin.password) {
         setUsuarioLogueado(usuarioAdmin);
+        navigate("/"); // redirige a inicio
       } else {
         setError("Correo o contraseña incorrectos.");
       }
@@ -64,13 +67,13 @@ const Login = ({ setUsuarioLogueado }) => {
         }}
       ></div>
 
-      {/* Card centrado con más ancho y alto */}
+      {/* Card centrado */}
       <div
         style={{
           position: "relative",
           zIndex: 2,
           width: "100%",
-          maxWidth: 600, // más ancho
+          maxWidth: 600,
           margin: "80px auto",
         }}
       >
@@ -78,7 +81,7 @@ const Login = ({ setUsuarioLogueado }) => {
           className="card"
           style={{
             width: "100%",
-            padding: 70, // más espacio interno
+            padding: 70,
             borderRadius: 20,
             background: "rgba(255,255,255,0.95)",
             boxShadow: "0 18px 45px rgba(0,0,0,0.25)",
