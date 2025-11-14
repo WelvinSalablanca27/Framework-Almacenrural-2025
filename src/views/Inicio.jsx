@@ -1,5 +1,5 @@
 import React from "react";
-import { Container, Row, Col, Card } from "react-bootstrap";
+import { Container, Row, Col, Card, Button } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import {
   FaUsers,
@@ -8,21 +8,21 @@ import {
   FaTruck,
   FaCashRegister,
   FaShoppingCart,
+  FaSignOutAlt
 } from "react-icons/fa";
 
 const secciones = [
-  { nombre: "Cliente", color: "#0d6efd", icono: FaUsers, ruta: "/cliente" },
-  { nombre: "Usuario", color: "#6f42c1", icono: FaUserCog, ruta: "/usuario" },
-  { nombre: "Producto", color: "#fd7e14", icono: FaBoxOpen, ruta: "/producto" },
-  { nombre: "Proveedor", color: "#20c997", icono: FaTruck, ruta: "/proveedor" },
-  { nombre: "Venta", color: "#dc3545", icono: FaCashRegister, ruta: "/venta" },
-  { nombre: "Compra", color: "#ffc107", icono: FaShoppingCart, ruta: "/compra" },
+  { nombre: "Cliente", color: "#0d6efd", icono: FaUsers, ruta: "/cliente", descripcion: "Gestionar información de clientes." },
+  { nombre: "Usuario", color: "#6f42c1", icono: FaUserCog, ruta: "/usuario", descripcion: "Administrar cuentas de usuario." },
+  { nombre: "Producto", color: "#fd7e14", icono: FaBoxOpen, ruta: "/producto", descripcion: "Ver y registrar productos disponibles." },
+  { nombre: "Proveedor", color: "#20c997", icono: FaTruck, ruta: "/proveedor", descripcion: "Gestionar proveedores y suministros." },
+  { nombre: "Venta", color: "#dc3545", icono: FaCashRegister, ruta: "/venta", descripcion: "Registrar y consultar ventas realizadas." },
+  { nombre: "Compra", color: "#ffc107", icono: FaShoppingCart, ruta: "/compra", descripcion: "Registrar compras y administrar inventario." },
 ];
 
-const fondoalmacenrural =
-  "https://i.pinimg.com/736x/76/fb/4a/76fb4a687980c6b31824bc0752d66f10.jpg";
+const fondoalmacenrural = "https://i.pinimg.com/736x/76/fb/4a/76fb4a687980c6b31824bc0752d66f10.jpg";
 
-const Inicio = () => {
+const Inicio = ({ cerrarSesion }) => {
   return (
     <div
       style={{
@@ -34,12 +34,42 @@ const Inicio = () => {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        overflow: "hidden",
+        overflow: "auto",
         position: "fixed",
         top: 0,
         left: 0,
       }}
     >
+      {/* Botón Cerrar sesión con icono y hover */}
+      <Button
+        onClick={cerrarSesion}
+        style={{
+          position: "fixed",
+          top: "15px",
+          right: "15px",
+          zIndex: 1000,
+          borderRadius: "8px",
+          fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          backgroundColor: "#dc3545",
+          borderColor: "#dc3545",
+          transition: "all 0.2s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = "#c82333";
+          e.currentTarget.style.transform = "scale(1.05)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = "#dc3545";
+          e.currentTarget.style.transform = "scale(1)";
+        }}
+      >
+        <FaSignOutAlt />
+        Cerrar sesión
+      </Button>
+
       {/* Capa semitransparente con blur */}
       <div
         style={{
@@ -62,20 +92,34 @@ const Inicio = () => {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
+          padding: "15px",
         }}
       >
-        <h1
-          className="fw-bold mb-4 text-center"
+        {/* Tarjeta de bienvenida compacta */}
+        <Card
           style={{
-            fontSize: "2.5rem",
-            color: "#47ff78ff",
-            textShadow: "2px 2px 8px rgba(0,0,0,0.5)",
+            background: "rgba(255, 255, 255, 0.88)",
+            borderRadius: "15px",
+            padding: "15px",
+            maxWidth: "350px",
+            width: "100%",
+            textAlign: "center",
+            marginBottom: "20px",
+            boxShadow: "0 6px 15px rgba(0,0,0,0.25)",
+            border: "1px solid rgba(255,255,255,0.5)",
+            backdropFilter: "blur(4px)",
           }}
         >
-          Veterinaria Almacén Rural
-        </h1>
+          <h5 className="fw-bold" style={{ color: "#198754" }}>
+            ¡Bienvenido al Sistema Almacén Rural!
+          </h5>
+          <p style={{ color: "#333", fontSize: "0.9rem", marginTop: "8px" }}>
+            Seleccione una sección para comenzar. Aquí podrá gestionar clientes, usuarios, productos, proveedores, ventas y compras.
+          </p>
+        </Card>
 
-        <Row className="g-3 justify-content-center">
+        {/* Secciones */}
+        <Row className="g-2 justify-content-center" style={{ width: "100%" }}>
           {secciones.map((sec, idx) => {
             const Icon = sec.icono;
             return (
@@ -91,33 +135,37 @@ const Inicio = () => {
                   <Card
                     className="text-center shadow"
                     style={{
-                      borderRadius: "15px",
+                      borderRadius: "12px",
                       width: "100%",
-                      padding: "15px",
+                      padding: "10px",
                       background: "rgba(255,255,255,0.95)",
                       border: "none",
                       cursor: "pointer",
-                      transition: "all 0.3s ease",
+                      transition: "all 0.2s ease",
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
                       justifyContent: "center",
                       minHeight: "100px",
-                      boxShadow: "0 6px 15px rgba(0,0,0,0.15)",
+                      fontSize: "0.85rem",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "translateY(-5px) scale(1.05)";
-                      e.currentTarget.style.boxShadow = "0 10px 25px rgba(0,0,0,0.25)";
+                      e.currentTarget.style.transform = "translateY(-3px) scale(1.05)";
+                      e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.25)";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = "translateY(0) scale(1)";
-                      e.currentTarget.style.boxShadow = "0 6px 15px rgba(0,0,0,0.15)";
+                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
                     }}
                   >
-                    <Icon size={45} color={sec.color} className="mb-2" />
-                    <h6 className="fw-bold" style={{ color: "#222" }}>
+                    <Icon size={35} color={sec.color} className="mb-1" />
+                    <span className="fw-bold" style={{ color: "#222" }}>
                       {sec.nombre}
-                    </h6>
+                    </span>
+                    <p style={{ fontSize: "0.7rem", color: "#555", marginTop: "4px" }}>
+                      {sec.descripcion}
+                    </p>
                   </Card>
                 </Link>
               </Col>
