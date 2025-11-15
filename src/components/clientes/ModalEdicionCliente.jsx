@@ -14,9 +14,8 @@ const ModalEdicionCliente = ({
 
     return (
         <Modal backdrop="static" show={mostrar} onHide={() => setMostrar(false)} centered>
-
             <Modal.Header closeButton>
-                <Modal.Title>Agregar Nuevo Cliente</Modal.Title>
+                <Modal.Title>Editar Cliente</Modal.Title>
             </Modal.Header>
             <Modal.Body>
                 <Form>
@@ -25,7 +24,7 @@ const ModalEdicionCliente = ({
                         <Form.Control
                             type="text"
                             name="Nombre1"
-                            value={clienteEditada?.Nombre1}
+                            value={clienteEditada?.Nombre1 || ""}
                             onChange={manejarCambio}
                             placeholder="Ej: Enrique"
                             maxLength={20}
@@ -38,12 +37,10 @@ const ModalEdicionCliente = ({
                         <Form.Control
                             type="text"
                             name="Nombre2"
-                            value={clienteEditada?.Nombre2}
+                            value={clienteEditada?.Nombre2 || ""}
                             onChange={manejarCambio}
                             placeholder="Ej: Manuel"
                             maxLength={20}
-                            required
-                            autoFocus
                         />
                     </Form.Group>
                     <Form.Group className="mb-3" controlId="Apellido1">
@@ -51,12 +48,11 @@ const ModalEdicionCliente = ({
                         <Form.Control
                             type="text"
                             name="Apellido1"
-                            value={clienteEditada?.Apellido1}
+                            value={clienteEditada?.Apellido1 || ""}
                             onChange={manejarCambio}
                             placeholder="Ej: Hernández"
                             maxLength={20}
                             required
-                            autoFocus
                         />
                     </Form.Group>
                     <Form.Group className="mb-3" controlId="Apellido2">
@@ -64,14 +60,11 @@ const ModalEdicionCliente = ({
                         <Form.Control
                             type="text"
                             name="Apellido2"
-                            value={clienteEditada?.Apellido2}
+                            value={clienteEditada?.Apellido2 || ""}
                             onChange={manejarCambio}
                             placeholder="Ej: Martínez"
                             maxLength={20}
-                            required
-                            autoFocus
                         />
-                  
                     </Form.Group>
                     <Form.Group className="mb-3" controlId="Direccion">
                         <Form.Label>Dirección</Form.Label>
@@ -79,23 +72,22 @@ const ModalEdicionCliente = ({
                             as="textarea"
                             rows={3}
                             name="Direccion"
-                            value={clienteEditada?.Direccion}
+                            value={clienteEditada?.Direccion || ""}
                             onChange={manejarCambio}
                             placeholder="Descripción opcional (máx. 100 caracteres)"
                             maxLength={150}
                         />
-                      </Form.Group>
+                    </Form.Group>
                     <Form.Group className="mb-3" controlId="Telefono">
-                        <Form.Label>Telefono del Cliente</Form.Label>
+                        <Form.Label>Teléfono del Cliente</Form.Label>
                         <Form.Control
                             type="text"
                             name="Telefono"
-                            value={clienteEditada?.Telefono}
+                            value={clienteEditada?.Telefono || ""}
                             onChange={manejarCambio}
                             placeholder="Ej: 8538****"
                             maxLength={8}
                             required
-                            autoFocus
                         />
                     </Form.Group>
                 </Form>
@@ -107,7 +99,7 @@ const ModalEdicionCliente = ({
                 <Button
                     variant="primary"
                     onClick={guardarEdicion}
-                    disabled={!clienteEditada?.Nombre1.trim()}
+                    disabled={!clienteEditada?.Nombre1 || !clienteEditada?.Nombre1.trim()}
                 >
                     Guardar Cambios
                 </Button>

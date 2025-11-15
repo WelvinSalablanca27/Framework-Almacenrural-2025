@@ -8,16 +8,13 @@ const Encabezado = ({ usuarioLogueado, manejarLogout }) => {
   const [show, setShow] = useState(false);
 
   const toggleMenu = () => setShow(!show);
-
-  const navegar = (ruta) => {
-    navigate(ruta);
-    setShow(false); // cierra menú al hacer clic
-  };
-
+  const navegar = (ruta) => { navigate(ruta); setShow(false); };
   const activo = (ruta) => location.pathname === ruta;
 
-  if (location.pathname === "/" || location.pathname === "/login") return null;
+  // Si no hay usuario logueado o estamos en login, no mostramos nada
+  if (!usuarioLogueado || location.pathname === "/login") return null;
 
+  // Menú completo
   const menuItems = [
     { ruta: "/", icono: "bi-house-door-fill", nombre: "Inicio" },
     { ruta: "/usuarios", icono: "bi-people-fill", nombre: "Usuarios" },
@@ -28,54 +25,44 @@ const Encabezado = ({ usuarioLogueado, manejarLogout }) => {
     { ruta: "/compra", icono: "bi-cart-fill", nombre: "Compra" },
   ];
 
+  // Filtrar menú según rol
+  let menuFiltrado = menuItems;
+  if (usuarioLogueado?.rol === "cajero") {
+    menuFiltrado = menuItems.filter(
+      (item) => item.ruta === "/producto" || item.ruta === "/venta" || item.ruta === "/cliente"
+    );
+  }
+
+  // Mostrar flecha solo si NO estamos en el inicio
+  const mostrarFlecha = location.pathname !== "/";
+
   return (
     <>
       <Navbar bg="primary" variant="dark" fixed="top" className="shadow-sm" style={{ height: "56px" }}>
         <div className="container-fluid position-relative d-flex align-items-center px-3">
-
-          {/* Flecha atrás */}
-          <span
-            onClick={() => navigate(-1)}
-            style={{
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              position: "absolute",
-              left: "20px",
-              height: "100%",
-              userSelect: "none",
-              transition: "transform 0.2s, color 0.2s",
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.2)")}
-            onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="50"
-              height="40"
-              fill="white"
-              viewBox="0 0 24 24"
-              style={{ transition: "fill 0.2s" }}
+          {mostrarFlecha && (
+            <span
+              onClick={() => navigate(-1)}
+              style={{ cursor: "pointer", position: "absolute", left: "20px", height: "100%" }}
             >
-              <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
-            </svg>
-          </span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="50" height="40" fill="white" viewBox="0 0 24 24">
+                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+              </svg>
+            </span>
+          )}
 
-          {/* Título centrado */}
           <Navbar.Brand
             onClick={() => navegar("/")}
-            className="fw-bold text-white mx-auto text-center d-flex align-items-center justify-content-center"
+            className="fw-bold text-white mx-auto text-center"
             style={{ cursor: "pointer", fontSize: "1.35rem" }}
           >
-            <i className="bi bi-shop-window me-2 d-inline-block" style={{ fontSize: "1.35rem" }}></i>
-            <span className="d-inline-block">Almacén Rural</span>
+            <i className="bi bi-shop-window me-2"></i>
+            Almacén Rural
           </Navbar.Brand>
 
-          {/* Botón de menú lateral */}
           <button
             onClick={toggleMenu}
-            className="btn btn-primary border-0 p-2 rounded-circle shadow-sm position-absolute end-0"
+            className="btn btn-primary border-0 p-2 rounded-circle position-absolute end-0"
             style={{ width: "44px", height: "44px" }}
           >
             <i className="bi bi-list fs-3"></i>
@@ -93,30 +80,22 @@ const Encabezado = ({ usuarioLogueado, manejarLogout }) => {
         <Offcanvas.Body className="p-0 bg-white d-flex flex-column justify-content-between" style={{ height: "100%" }}>
           <div>
             <Nav className="flex-column w-100">
-              {menuItems.map((item) => (
+              {menuFiltrado.map((item) => (
                 <Nav.Link
                   key={item.ruta}
                   onClick={() => navegar(item.ruta)}
-                  className={`d-flex align-items-center justify-content-start px-4 py-3 ${activo(item.ruta) ? "bg-primary text-white" : "text-dark"}`}
-                  style={{ cursor: "pointer", fontWeight: activo(item.ruta) ? 600 : 500, transition: "all 0.2s ease" }}
+                  className={`d-flex align-items-center px-4 py-3 ${activo(item.ruta) ? "bg-primary text-white" : "text-dark"}`}
+                  style={{ cursor: "pointer", fontWeight: activo(item.ruta) ? 600 : 500 }}
                 >
                   <i className={`bi ${item.icono} fs-4 me-3`} style={{ width: 30 }}></i>
-                  <span style={{ fontSize: "1.05rem" }}>{item.nombre}</span>
+                  <span>{item.nombre}</span>
                 </Nav.Link>
               ))}
             </Nav>
           </div>
 
-          {/* Botón Cerrar sesión abajo */}
           <div className="px-3 pb-3">
-            <Button
-              variant="danger"
-              className="w-100 d-flex align-items-center justify-content-center"
-              style={{ gap: "6px", fontWeight: "bold" }}
-              onClick={manejarLogout}
-              onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.03)"}
-              onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
-            >
+            <Button variant="danger" className="w-100" onClick={manejarLogout}>
               <i className="bi bi-box-arrow-right"></i> Cerrar sesión
             </Button>
           </div>

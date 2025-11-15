@@ -6,7 +6,16 @@ const usuarioAdmin = {
   nombre: "Administrador",
   correo: "admin@vh.com",
   password: "SistemaRural2025!",
+  rol: "administrador",
   secciones: ["Cliente", "Usuario", "Producto", "Proveedor", "Venta", "Compra"],
+};
+
+const usuarioCajero = {
+  nombre: "Cajero",
+  correo: "cajero@correo.com",
+  password: "Cajero@2025",
+  rol: "cajero",
+  secciones: ["Producto", "Venta"],
 };
 
 const fondoalmacenrural =
@@ -25,9 +34,18 @@ const Login = ({ setUsuarioLogueado }) => {
     setLoading(true);
 
     setTimeout(() => {
-      if (correo === usuarioAdmin.correo && password === usuarioAdmin.password) {
-        setUsuarioLogueado(usuarioAdmin);
-        navigate("/"); // redirige a inicio
+      if (
+        (correo === usuarioAdmin.correo && password === usuarioAdmin.password) ||
+        (correo === usuarioCajero.correo && password === usuarioCajero.password)
+      ) {
+        const usuarioLogueado =
+          correo === usuarioAdmin.correo ? usuarioAdmin : usuarioCajero;
+
+        // 🔹 Guardar en state y localStorage
+        setUsuarioLogueado(usuarioLogueado);
+        localStorage.setItem("usuarioLogueado", JSON.stringify(usuarioLogueado));
+
+        navigate("/", { replace: true });
       } else {
         setError("Correo o contraseña incorrectos.");
       }
@@ -46,15 +64,16 @@ const Login = ({ setUsuarioLogueado }) => {
         backgroundImage: `url(${fondoalmacenrural})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        backgroundAttachment: "fixed",
+        
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
         overflow: "hidden",
         padding: "10px",
       }}
+
     >
-      {/* Capa semitransparente */}
+
       <div
         style={{
           position: "absolute",
@@ -65,10 +84,9 @@ const Login = ({ setUsuarioLogueado }) => {
           backgroundColor: "rgba(0,0,0,0.25)",
           zIndex: 1,
         }}
-      ></div>
-
-      {/* Card centrado */}
+      ></div>+
       <div
+
         style={{
           position: "relative",
           zIndex: 2,
@@ -78,57 +96,20 @@ const Login = ({ setUsuarioLogueado }) => {
         }}
       >
         <Card
-          className="card"
+
           style={{
             width: "100%",
             padding: 70,
             borderRadius: 20,
             background: "rgba(255,255,255,0.95)",
             boxShadow: "0 18px 45px rgba(0,0,0,0.25)",
-            animation: "fadeIn 0.8s ease, slideDown 0.8s ease",
+
             fontSize: "1.1rem",
             lineHeight: "1.6",
             margin: "0 auto",
-          }}
+          }
+        }
         >
-          <style>
-            {`
-              @keyframes fadeIn {
-                from { opacity: 0; } 
-                to { opacity: 1; }
-              }
-              @keyframes slideDown {
-                from { transform: translateY(-25px); }
-                to { transform: translateY(0); }
-              }
-              .input-focus {
-                transition: all 0.3s;
-                margin-bottom: 25px;
-              }
-              .input-focus:focus {
-                box-shadow: 0 0 0 2px #19875490 !important;
-                border-color: #198754 !important;
-              }
-              .link-forgot {
-                font-size: 0.95rem;
-                color: #198754;
-                text-decoration: underline;
-                cursor: pointer;
-              }
-              .link-forgot:hover {
-                color: #145c32;
-              }
-              .btn-login:disabled {
-                background-color: #19875480 !important;
-              }
-
-              @media (max-width: 480px) {
-                .card {
-                  padding: 40px; /* menos padding en móviles */
-                }
-              }
-            `}
-          </style>
 
           <div className="text-center mb-4">
             <img
@@ -155,7 +136,7 @@ const Login = ({ setUsuarioLogueado }) => {
               <Form.Control
                 type="email"
                 list="usuariosDisponibles"
-                className="input-focus"
+
                 value={correo}
                 placeholder="correo@ejemplo.com"
                 onChange={(e) => setCorreo(e.target.value)}
@@ -163,6 +144,7 @@ const Login = ({ setUsuarioLogueado }) => {
               />
               <datalist id="usuariosDisponibles">
                 <option value={usuarioAdmin.correo} />
+                <option value={usuarioCajero.correo} />
               </datalist>
             </Form.Group>
 
@@ -170,7 +152,7 @@ const Login = ({ setUsuarioLogueado }) => {
               <Form.Label>Contraseña</Form.Label>
               <Form.Control
                 type="password"
-                className="input-focus"
+
                 value={password}
                 placeholder="********"
                 onChange={(e) => setPassword(e.target.value)}
@@ -180,7 +162,7 @@ const Login = ({ setUsuarioLogueado }) => {
 
             <Button
               type="submit"
-              className="w-100 btn-login"
+              className="w-100"
               style={{
                 backgroundColor: "#198754",
                 border: "none",
@@ -188,15 +170,17 @@ const Login = ({ setUsuarioLogueado }) => {
                 padding: "18px 0",
                 fontWeight: "bold",
                 fontSize: "1.25rem",
-                boxShadow: "0 4px 14px rgba(25,135,84,0.4)",
+
               }}
               disabled={loading}
             >
-              {loading ? <Spinner animation="border" size="sm" /> : "Ingresar"}
+              {loading ? <Spinner animation="border" size="sm" /> : "Iniciar sesión"}
             </Button>
 
             <div className="text-center mt-3">
-              <span className="link-forgot">Olvidé contraseña</span>
+              <span style={{ fontSize: "0.95rem", color: "#198754", textDecoration: "underline", cursor: "pointer" }}>
+                Olvidé contraseña
+              </span>
             </div>
           </Form>
 
