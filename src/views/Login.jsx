@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, Form, Button, Alert, Spinner } from "react-bootstrap";
+import { Card, Form, Button, Alert, Spinner, Modal } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 
 const usuarioAdmin = {
@@ -28,6 +28,12 @@ const Login = ({ setUsuarioLogueado }) => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Estado del modal de recuperación
+  const [showModal, setShowModal] = useState(false);
+  const [correoRecuperacion, setCorreoRecuperacion] = useState("");
+  const [passwordAnterior, setPasswordAnterior] = useState("");
+  const [mensajeRecuperacion, setMensajeRecuperacion] = useState("");
+
   const manejarLogin = (e) => {
     e.preventDefault();
     setError("");
@@ -41,7 +47,6 @@ const Login = ({ setUsuarioLogueado }) => {
         const usuarioLogueado =
           correo === usuarioAdmin.correo ? usuarioAdmin : usuarioCajero;
 
-        // 🔹 Guardar en state y localStorage
         setUsuarioLogueado(usuarioLogueado);
         localStorage.setItem("usuarioLogueado", JSON.stringify(usuarioLogueado));
 
@@ -51,6 +56,24 @@ const Login = ({ setUsuarioLogueado }) => {
       }
       setLoading(false);
     }, 800);
+  };
+
+  const manejarRecuperacion = (e) => {
+    e.preventDefault();
+
+    // Simular verificación básica
+    if (
+      correoRecuperacion === usuarioAdmin.correo ||
+      correoRecuperacion === usuarioCajero.correo
+    ) {
+      setMensajeRecuperacion(
+        "Se ha recibido tu solicitud de recuperación. Por seguridad, revisa tu correo registrado o contacta al administrador para restablecer la contraseña."
+      );
+    } else {
+      setMensajeRecuperacion(
+        "El correo ingresado no coincide con nuestros registros. Verifica e intenta nuevamente."
+      );
+    }
   };
 
   return (
@@ -64,16 +87,13 @@ const Login = ({ setUsuarioLogueado }) => {
         backgroundImage: `url(${fondoalmacenrural})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
         overflow: "hidden",
         padding: "10px",
       }}
-
     >
-
       <div
         style={{
           position: "absolute",
@@ -84,9 +104,9 @@ const Login = ({ setUsuarioLogueado }) => {
           backgroundColor: "rgba(0,0,0,0.25)",
           zIndex: 1,
         }}
-      ></div>+
-      <div
+      ></div>
 
+      <div
         style={{
           position: "relative",
           zIndex: 2,
@@ -96,21 +116,17 @@ const Login = ({ setUsuarioLogueado }) => {
         }}
       >
         <Card
-
           style={{
             width: "100%",
             padding: 70,
             borderRadius: 20,
             background: "rgba(255,255,255,0.95)",
             boxShadow: "0 18px 45px rgba(0,0,0,0.25)",
-
             fontSize: "1.1rem",
             lineHeight: "1.6",
             margin: "0 auto",
-          }
-        }
+          }}
         >
-
           <div className="text-center mb-4">
             <img
               src={fondoalmacenrural}
@@ -136,7 +152,6 @@ const Login = ({ setUsuarioLogueado }) => {
               <Form.Control
                 type="email"
                 list="usuariosDisponibles"
-
                 value={correo}
                 placeholder="correo@ejemplo.com"
                 onChange={(e) => setCorreo(e.target.value)}
@@ -152,7 +167,6 @@ const Login = ({ setUsuarioLogueado }) => {
               <Form.Label>Contraseña</Form.Label>
               <Form.Control
                 type="password"
-
                 value={password}
                 placeholder="********"
                 onChange={(e) => setPassword(e.target.value)}
@@ -170,7 +184,6 @@ const Login = ({ setUsuarioLogueado }) => {
                 padding: "18px 0",
                 fontWeight: "bold",
                 fontSize: "1.25rem",
-
               }}
               disabled={loading}
             >
@@ -178,7 +191,15 @@ const Login = ({ setUsuarioLogueado }) => {
             </Button>
 
             <div className="text-center mt-3">
-              <span style={{ fontSize: "0.95rem", color: "#198754", textDecoration: "underline", cursor: "pointer" }}>
+              <span
+                style={{
+                  fontSize: "0.95rem",
+                  color: "#198754",
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                }}
+                onClick={() => setShowModal(true)}
+              >
                 Olvidé contraseña
               </span>
             </div>
@@ -189,6 +210,47 @@ const Login = ({ setUsuarioLogueado }) => {
           </div>
         </Card>
       </div>
+
+      {/* Modal de recuperación */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Recuperar Contraseña</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {mensajeRecuperacion ? (
+            <Alert variant="info">{mensajeRecuperacion}</Alert>
+          ) : (
+            <Form onSubmit={manejarRecuperacion}>
+              <Form.Group className="mb-3">
+                <Form.Label>Correo registrado</Form.Label>
+                <Form.Control
+                  type="email"
+                  value={correoRecuperacion}
+                  onChange={(e) => setCorreoRecuperacion(e.target.value)}
+                  required
+                />
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Contraseña anterior</Form.Label>
+                <Form.Control
+                  type="password"
+                  value={passwordAnterior}
+                  onChange={(e) => setPasswordAnterior(e.target.value)}
+                  placeholder="Opcional para verificación"
+                />
+                <Form.Text className="text-muted">
+                  Puedes ingresar tu contraseña anterior para verificar tu identidad.
+                </Form.Text>
+              </Form.Group>
+
+              <Button type="submit" className="w-100" style={{ backgroundColor: "#198754", border: "none" }}>
+                Enviar solicitud
+              </Button>
+            </Form>
+          )}
+        </Modal.Body>
+      </Modal>
     </div>
   );
 };
