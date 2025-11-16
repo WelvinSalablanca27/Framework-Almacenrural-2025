@@ -19,42 +19,30 @@ const ModalEdicionCompra = ({
   const [feIngresado, setFeIngresado] = useState("");
   const [feCaducidad, setFeCaducidad] = useState("");
 
-  // Función para obtener fecha de hoy en formato YYYY-MM-DD
-  const hoy = () => new Date().toISOString().split('T')[0];
-
-  // Función para fecha de caducidad por defecto: +1 año
-  const caducidadDefault = () => {
-    const fecha = new Date();
-    fecha.setFullYear(fecha.getFullYear() + 1);
-    return fecha.toISOString().split('T')[0];
-  };
-
-  // Se ejecuta al abrir el modal
+  // SE EJECUTA SOLO CUANDO SE ABRE EL MODAL
   useEffect(() => {
     if (mostrar && compra) {
       setCompraEnEdicion({
         id_Proveedor: compra.id_Proveedor || "",
-        Fe_compra: compra.Fe_compra?.split("T")[0] || ""
+        Fe_compra: compra.Fe_compra?.split(" ")[0] || ""
       });
 
       const detallesFormateados = (detalles || []).map(d => ({
-        id_Producto: d.id_Producto || d.id_producto,
-        Cantidad: d.Cantidad || d.cantidad || 0,
-        Precio: parseFloat(d.Precio || d.precio || 0),
-        Fe_Ingresado: (d.Fe_Ingresado?.split("T")[0]) || hoy(),  // ← LLENA SI ESTÁ VACÍO
-        Fe_caducidad: (d.Fe_caducidad?.split("T")[0]) || caducidadDefault()  // ← +1 AÑO
+        id_Producto: d.id_Producto,
+        Cantidad: d.Cantidad || 0,
+        Precio: parseFloat(d.Precio) || 0, // CORREGIDO
+        Fe_Ingresado: d.Fe_Ingresado?.split(" ")[0] || "",
+        Fe_caducidad: d.Fe_caducidad?.split(" ")[0] || ""
       }));
-
       setDetalles(detallesFormateados);
 
-      // Reinicia formulario con fechas por defecto
       setProductoSeleccionado("");
       setCantidad("");
       setPrecio("");
-      setFeIngresado(hoy());
-      setFeCaducidad(caducidadDefault());
+      setFeIngresado(new Date().toISOString().split('T')[0]);
+      setFeCaducidad(new Date().toISOString().split('T')[0]);
     }
-  }, [mostrar, compra, detalles]);
+  }, [mostrar, compra]); // SIN DETALLES → NO BUCLE
 
   const agregarDetalle = () => {
     if (!productoSeleccionado || !cantidad || !precio || !feIngresado || !feCaducidad) {
@@ -62,32 +50,19 @@ const ModalEdicionCompra = ({
       return;
     }
 
-    const prod = productos.find(p =>
-      p.id_Producto === parseInt(productoSeleccionado) || p.id_producto === parseInt(productoSeleccionado)
-    );
+    setDetalles(prev => [...prev, {
+      id_Producto: parseInt(productoSeleccionado),
+      Cantidad: parseInt(cantidad) || 0,
+      Precio: parseFloat(precio) || 0, // CORREGIDO: NUNCA NaN
+      Fe_Ingresado: feIngresado,
+      Fe_caducidad: feCaducidad
+    }]);
 
-    if (!prod) {
-      alert("Producto no encontrado");
-      return;
-    }
-
-    setDetalles(prev => [
-      ...prev,
-      {
-        id_Producto: parseInt(productoSeleccionado),
-        Cantidad: parseInt(cantidad),
-        Precio: parseFloat(precio),
-        Fe_Ingresado: feIngresado,
-        Fe_caducidad: feCaducidad
-      }
-    ]);
-
-    // Reinicia con valores por defecto
     setProductoSeleccionado("");
     setCantidad("");
     setPrecio("");
-    setFeIngresado(hoy());
-    setFeCaducidad(caducidadDefault());
+    setFeIngresado(new Date().toISOString().split('T')[0]);
+    setFeCaducidad(new Date().toISOString().split('T')[0]);
   };
 
   const eliminarDetalle = (index) => {
@@ -106,7 +81,7 @@ const ModalEdicionCompra = ({
 
       <Modal.Body className="pt-2 px-4">
         <Form>
-          {/* Proveedor y Fecha */}
+          {/* PROVEEDOR Y FECHA */}
           <Row className="g-3 mb-3">
             <Col xs={12} md={6}>
               <Form.Label className="fw-semibold small text-muted">Proveedor</Form.Label>
@@ -118,13 +93,13 @@ const ModalEdicionCompra = ({
                 <option value="">Seleccione...</option>
                 {proveedores.map(p => (
                   <option key={p.id_Proveedor} value={p.id_Proveedor}>
-                    {p.Nombre_Proveedor || p.nombre_proveedor}
+                    {p.nombre || p.Nombre_Proveedor}
                   </option>
                 ))}
               </Form.Select>
             </Col>
             <Col xs={12} md={6}>
-              <Form.Label className="fw-semibold small text-muted">Fecha Compra</Form.Label>
+              <Form.Label className="fw-semibold small text-muted">Fecha</Form.Label>
               <Form.Control
                 type="date"
                 value={compraEnEdicion?.Fe_compra || ""}
@@ -134,7 +109,7 @@ const ModalEdicionCompra = ({
             </Col>
           </Row>
 
-          {/* Formulario para agregar producto */}
+          {/* NUEVO DETALLE */}
           <div className="bg-light p-3 rounded mb-3">
             <Row className="g-2 align-items-end">
               <Col xs={12} md={4}>
@@ -143,22 +118,23 @@ const ModalEdicionCompra = ({
                   onChange={e => setProductoSeleccionado(e.target.value)}
                   size="sm"
                 >
-                  <option value="">Seleccione producto</option>
+                  <option value="">Producto</option>
                   {productos.map(p => (
-                    <option key={p.id_Producto || p.id_producto} value={p.id_Producto || p.id_producto}>
+                    <option key={p.id_Producto} value={p.id_Producto}>
                       {p.nombre_producto || p.Nombre_Prod}
                     </option>
                   ))}
                 </Form.Select>
               </Col>
 
-              <Col xs={6} md={1}>
+              <Col xs={6} md={2}>
                 <Form.Control
                   type="number"
                   placeholder="Cant."
                   value={cantidad}
                   onChange={e => setCantidad(e.target.value)}
                   size="sm"
+                  className="text-center"
                 />
               </Col>
 
@@ -170,11 +146,11 @@ const ModalEdicionCompra = ({
                   onChange={e => setPrecio(e.target.value)}
                   step="0.01"
                   size="sm"
+                  className="text-center"
                 />
               </Col>
 
               <Col xs={6} md={2}>
-                <Form.Label className="small text-muted mb-1">Ingresado</Form.Label>
                 <Form.Control
                   type="date"
                   value={feIngresado}
@@ -184,7 +160,6 @@ const ModalEdicionCompra = ({
               </Col>
 
               <Col xs={6} md={2}>
-                <Form.Label className="small text-muted mb-1">Caducidad</Form.Label>
                 <Form.Control
                   type="date"
                   value={feCaducidad}
@@ -194,14 +169,19 @@ const ModalEdicionCompra = ({
               </Col>
 
               <Col xs={12} md={1} className="text-md-end">
-                <Button variant="success" size="sm" onClick={agregarDetalle} className="w-100">
+                <Button
+                  variant="success"
+                  size="sm"
+                  onClick={agregarDetalle}
+                  className="w-100"
+                >
                   +
                 </Button>
               </Col>
             </Row>
           </div>
 
-          {/* Tabla de detalles */}
+          {/* TABLA RESPONSIVE */}
           {detalles.length > 0 ? (
             <div className="table-responsive">
               <Table striped bordered hover size="sm" className="small">
@@ -210,29 +190,25 @@ const ModalEdicionCompra = ({
                     <th>Producto</th>
                     <th className="text-center">Cant.</th>
                     <th className="text-center">Precio</th>
-                    <th className="text-center">Ingresado</th>
-                    <th className="text-center">Caducidad</th>
+                    <th className="text-center">Ing.</th>
+                    <th className="text-center">Cad.</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {detalles.map((d, i) => {
-                    const prod = productos.find(
-                      p => p.id_Producto === d.id_Producto || p.id_producto === d.id_Producto
-                    );
+                    const prod = productos.find(p => p.id_Producto === d.id_Producto);
                     return (
                       <tr key={i}>
-                        <td>{prod?.nombre_producto || prod?.Nombre_Prod || "—"}</td>
+                        <td className="small">
+                          {prod?.nombre_producto || prod?.Nombre_Prod || '—'}
+                        </td>
                         <td className="text-center">{d.Cantidad}</td>
                         <td className="text-success text-center fw-bold">
-                          ${Number(d.Precio).toFixed(2)}
+                          ${Number(d.Precio || 0).toFixed(2)} {/* CORREGIDO: NUNCA NaN */}
                         </td>
-                        <td className="text-center">
-                          {d.Fe_Ingresado || hoy()}
-                        </td>
-                        <td className="text-center text-danger fw-bold">
-                          {d.Fe_caducidad || caducidadDefault()}
-                        </td>
+                        <td className="text-center small">{d.Fe_Ingresado}</td>
+                        <td className="text-center small">{d.Fe_caducidad}</td>
                         <td className="text-center">
                           <Button
                             variant="danger"
@@ -266,7 +242,7 @@ const ModalEdicionCompra = ({
           onClick={actualizarCompra}
           disabled={!compraEnEdicion?.id_Proveedor || detalles.length === 0}
         >
-          Guardar Cambios
+          Guardar
         </Button>
       </Modal.Footer>
     </Modal>
