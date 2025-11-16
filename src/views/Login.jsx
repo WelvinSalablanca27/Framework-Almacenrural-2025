@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 const usuarioAdmin = {
   nombre: "Administrador",
   correo: "admin@vh.com",
+  telefono: "84188486",
   password: "SistemaRural2025!",
   rol: "administrador",
   secciones: ["Cliente", "Usuario", "Producto", "Proveedor", "Venta", "Compra"],
@@ -13,6 +14,7 @@ const usuarioAdmin = {
 const usuarioCajero = {
   nombre: "Cajero",
   correo: "cajero@correo.com",
+  telefono: "57136228",
   password: "Cajero@2025",
   rol: "cajero",
   secciones: ["Producto", "Venta"],
@@ -23,12 +25,15 @@ const fondoalmacenrural =
 
 const Login = ({ setUsuarioLogueado }) => {
   const navigate = useNavigate();
-  const [correo, setCorreo] = useState("");
+  const [usuarioInput, setUsuarioInput] = useState(""); // correo o teléfono
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Estado del modal de recuperación
+  // Mostrar/ocultar contraseña
+  const [mostrarPassword, setMostrarPassword] = useState(false);
+
+  // Modal de recuperación
   const [showModal, setShowModal] = useState(false);
   const [correoRecuperacion, setCorreoRecuperacion] = useState("");
   const [passwordAnterior, setPasswordAnterior] = useState("");
@@ -40,19 +45,20 @@ const Login = ({ setUsuarioLogueado }) => {
     setLoading(true);
 
     setTimeout(() => {
-      if (
-        (correo === usuarioAdmin.correo && password === usuarioAdmin.password) ||
-        (correo === usuarioCajero.correo && password === usuarioCajero.password)
-      ) {
-        const usuarioLogueado =
-          correo === usuarioAdmin.correo ? usuarioAdmin : usuarioCajero;
+      const esAdmin =
+        (usuarioInput === usuarioAdmin.correo || usuarioInput === usuarioAdmin.telefono) &&
+        password === usuarioAdmin.password;
+      const esCajero =
+        (usuarioInput === usuarioCajero.correo || usuarioInput === usuarioCajero.telefono) &&
+        password === usuarioCajero.password;
 
+      if (esAdmin || esCajero) {
+        const usuarioLogueado = esAdmin ? usuarioAdmin : usuarioCajero;
         setUsuarioLogueado(usuarioLogueado);
         localStorage.setItem("usuarioLogueado", JSON.stringify(usuarioLogueado));
-
         navigate("/", { replace: true });
       } else {
-        setError("Correo o contraseña incorrectos.");
+        setError("Usuario o contraseña incorrectos.");
       }
       setLoading(false);
     }, 800);
@@ -61,18 +67,16 @@ const Login = ({ setUsuarioLogueado }) => {
   const manejarRecuperacion = (e) => {
     e.preventDefault();
 
-    // Simular verificación básica
-    if (
-      correoRecuperacion === usuarioAdmin.correo ||
-      correoRecuperacion === usuarioCajero.correo
-    ) {
-      setMensajeRecuperacion(
-        "Se ha recibido tu solicitud de recuperación. Por seguridad, revisa tu correo registrado o contacta al administrador para restablecer la contraseña."
-      );
+    let usuario;
+    if (correoRecuperacion === usuarioAdmin.correo || correoRecuperacion === usuarioAdmin.telefono) usuario = usuarioAdmin;
+    if (correoRecuperacion === usuarioCajero.correo || correoRecuperacion === usuarioCajero.telefono) usuario = usuarioCajero;
+
+    if (usuario && passwordAnterior === usuario.password) {
+      const nuevaPassword = prompt("Ingresa tu nueva contraseña") || usuario.password;
+      usuario.password = nuevaPassword;
+      setMensajeRecuperacion(`Contraseña actualizada correctamente. Tu nueva contraseña es: ${usuario.password}`);
     } else {
-      setMensajeRecuperacion(
-        "El correo ingresado no coincide con nuestros registros. Verifica e intenta nuevamente."
-      );
+      setMensajeRecuperacion("Correo o contraseña anterior incorrecta.");
     }
   };
 
@@ -111,19 +115,19 @@ const Login = ({ setUsuarioLogueado }) => {
           position: "relative",
           zIndex: 2,
           width: "100%",
-          maxWidth: 600,
-          margin: "80px auto",
+          maxWidth: 500,
+          margin: "60px auto",
         }}
       >
         <Card
           style={{
             width: "100%",
-            padding: 70,
+            padding: 40,
             borderRadius: 20,
             background: "rgba(255,255,255,0.95)",
-            boxShadow: "0 18px 45px rgba(0,0,0,0.25)",
-            fontSize: "1.1rem",
-            lineHeight: "1.6",
+            boxShadow: "0 10px 25px rgba(0,0,0,0.25)",
+            fontSize: "1rem",
+            lineHeight: "1.4",
             margin: "0 auto",
           }}
         >
@@ -132,14 +136,14 @@ const Login = ({ setUsuarioLogueado }) => {
               src={fondoalmacenrural}
               alt="logo"
               style={{
-                width: 95,
-                height: 95,
-                borderRadius: 20,
+                width: 80,
+                height: 80,
+                borderRadius: 15,
                 objectFit: "cover",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                boxShadow: "0 3px 10px rgba(0,0,0,0.3)",
               }}
             />
-            <h3 className="mt-3 fw-bold text-success" style={{ fontSize: "1.6rem" }}>
+            <h3 className="mt-3 fw-bold text-success" style={{ fontSize: "1.4rem" }}>
               Veterinaria Almacén Rural
             </h3>
           </div>
@@ -148,29 +152,38 @@ const Login = ({ setUsuarioLogueado }) => {
 
           <Form onSubmit={manejarLogin}>
             <Form.Group className="mb-3">
-              <Form.Label>Correo</Form.Label>
+              <Form.Label>Correo o Teléfono</Form.Label>
               <Form.Control
-                type="email"
+                type="text"
                 list="usuariosDisponibles"
-                value={correo}
-                placeholder="correo@ejemplo.com"
-                onChange={(e) => setCorreo(e.target.value)}
+                value={usuarioInput}
+                onChange={(e) => setUsuarioInput(e.target.value)}
                 required
               />
               <datalist id="usuariosDisponibles">
                 <option value={usuarioAdmin.correo} />
+                <option value={usuarioAdmin.telefono} />
                 <option value={usuarioCajero.correo} />
+                <option value={usuarioCajero.telefono} />
               </datalist>
             </Form.Group>
 
-            <Form.Group className="mb-3">
+            <Form.Group className="mb-1">
               <Form.Label>Contraseña</Form.Label>
               <Form.Control
-                type="password"
+                type={mostrarPassword ? "text" : "password"}
                 value={password}
-                placeholder="********"
                 onChange={(e) => setPassword(e.target.value)}
                 required
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Check
+                type="checkbox"
+                label="Mostrar contraseña"
+                checked={mostrarPassword}
+                onChange={() => setMostrarPassword(!mostrarPassword)}
               />
             </Form.Group>
 
@@ -181,19 +194,19 @@ const Login = ({ setUsuarioLogueado }) => {
                 backgroundColor: "#198754",
                 border: "none",
                 borderRadius: 12,
-                padding: "18px 0",
+                padding: "14px 0",
                 fontWeight: "bold",
-                fontSize: "1.25rem",
+                fontSize: "1.1rem",
               }}
               disabled={loading}
             >
               {loading ? <Spinner animation="border" size="sm" /> : "Iniciar sesión"}
             </Button>
 
-            <div className="text-center mt-3">
+            <div className="text-center mt-2">
               <span
                 style={{
-                  fontSize: "0.95rem",
+                  fontSize: "0.9rem",
                   color: "#198754",
                   textDecoration: "underline",
                   cursor: "pointer",
@@ -205,7 +218,7 @@ const Login = ({ setUsuarioLogueado }) => {
             </div>
           </Form>
 
-          <div className="text-center mt-3 text-muted" style={{ fontSize: "1rem" }}>
+          <div className="text-center mt-2 text-muted" style={{ fontSize: "0.9rem" }}>
             Acceso seguro • Solo personal autorizado
           </div>
         </Card>
@@ -222,9 +235,9 @@ const Login = ({ setUsuarioLogueado }) => {
           ) : (
             <Form onSubmit={manejarRecuperacion}>
               <Form.Group className="mb-3">
-                <Form.Label>Correo registrado</Form.Label>
+                <Form.Label>Correo o Teléfono registrado</Form.Label>
                 <Form.Control
-                  type="email"
+                  type="text"
                   value={correoRecuperacion}
                   onChange={(e) => setCorreoRecuperacion(e.target.value)}
                   required
@@ -240,7 +253,7 @@ const Login = ({ setUsuarioLogueado }) => {
                   placeholder="Opcional para verificación"
                 />
                 <Form.Text className="text-muted">
-                  Puedes ingresar tu contraseña anterior para verificar tu identidad.
+                  Ingresa tu contraseña anterior para verificar tu identidad.
                 </Form.Text>
               </Form.Group>
 
