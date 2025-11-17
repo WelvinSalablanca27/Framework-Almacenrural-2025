@@ -167,78 +167,171 @@ const Proveedor = () => {
     // ---------------------------------------------
     // EXCEL / PDF
     // ---------------------------------------------
-    const generarReporteExcel = async () => {
-        const workbook = new ExcelJS.Workbook();
-        const sheet = workbook.addWorksheet("Proveedores");
+   const generarReporteExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("Proveedores");
 
-        sheet.columns = [
-            { header: "ID", key: "id", width: 8 },
-            { header: "Nombre", key: "nombre", width: 25 },
-            { header: "Teléfono", key: "telefono", width: 15 },
-            { header: "Email", key: "email", width: 25 },
-            { header: "Dirección", key: "direccion", width: 30 },
-            { header: "Tipo Distribuidor", key: "tipo", width: 18 },
-            { header: "Cond. Pago", key: "pago", width: 15 },
-            { header: "Estado", key: "estado", width: 10 },
-            { header: "Registro", key: "fecha", width: 20 },
-        ];
+    // TÍTULO
+    sheet.mergeCells("A1:I1");
+    const titulo = sheet.getCell("A1");
+    titulo.value = "Reporte de Proveedores - Almacén Rural";
+    titulo.alignment = { horizontal: "center" };
+    titulo.font = { size: 18, bold: true, color: { argb: "198754" } };
 
-        proveedoresFiltrados.forEach((p) => {
-            sheet.addRow({
-                id: p.id_Proveedor,
-                nombre: p.Nombre_Proveedor,
-                telefono: p.Telefono || "-",
-                email: p.Email || "-",
-                direccion: p.Direccion || "-",
-                tipo: p.Tipo_Distribuidor || "-",
-                pago: p.Condiciones_Pago || "-",
-                estado: p.Estado || "Activo",
-                fecha: new Date(p.Fecha_Registro).toLocaleDateString(),
-            });
+    // FECHA / HORA
+    sheet.mergeCells("A2:I2");
+    const fecha = sheet.getCell("A2");
+    fecha.value = `Generado: ${new Date().toLocaleString()}`;
+    fecha.alignment = { horizontal: "center" };
+    fecha.font = { italic: true, color: { argb: "555555" } };
 
+    sheet.addRow([]);
+
+    // COLUMNAS
+    sheet.columns = [
+        { header: "ID", key: "id", width: 10 },
+        { header: "Nombre", key: "nombre", width: 25 },
+        { header: "Teléfono", key: "telefono", width: 15 },
+        { header: "Email", key: "email", width: 28 },
+        { header: "Dirección", key: "direccion", width: 32 },
+        { header: "Tipo Distribuidor", key: "tipo", width: 18 },
+        { header: "Cond. Pago", key: "pago", width: 15 },
+        { header: "Estado", key: "estado", width: 12 },
+        { header: "Registro", key: "fecha", width: 20 },
+    ];
+
+    // ENCABEZADOS
+    const headerRow = sheet.addRow(sheet.columns.map((c) => c.header));
+    headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    headerRow.alignment = { horizontal: "center", vertical: "middle" };
+    headerRow.height = 25;
+
+    headerRow.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "198754" },
+    };
+
+    headerRow.eachCell((cell) => {
+        cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+        };
+    });
+
+    // CUERPO
+    proveedoresFiltrados.forEach((p) => {
+        const row = sheet.addRow({
+            id: p.id_Proveedor,
+            nombre: p.Nombre_Proveedor,
+            telefono: p.Telefono || "-",
+            email: p.Email || "-",
+            direccion: p.Direccion || "-",
+            tipo: p.Tipo_Distribuidor || "-",
+            pago: p.Condiciones_Pago || "-",
+            estado: p.Estado,
+            fecha: new Date(p.Fecha_Registro).toLocaleDateString(),
         });
 
-        const buffer = await workbook.xlsx.writeBuffer();
-        saveAs(
-            new Blob([buffer], { type: "application/octet-stream" }),
-            `reporte_proveedores.xlsx`
-        );
-    };
+        row.alignment = { horizontal: "center" };
+
+        row.eachCell((cell) => {
+            cell.border = {
+                top: { style: "thin" },
+                left: { style: "thin" },
+                bottom: { style: "thin" },
+                right: { style: "thin" },
+            };
+        });
+    });
+
+    // FIRMA FINAL
+    sheet.addRow([]);
+    sheet.addRow([]);
+    sheet.mergeCells(`A${sheet.lastRow.number + 1}:I${sheet.lastRow.number + 1}`);
+    const firma = sheet.getCell(`A${sheet.lastRow.number}`);
+    firma.alignment = { horizontal: "center" };
+    firma.font = { italic: true, color: { argb: "444444" } };
+
+    // DESCARGA
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), "Reporte_Proveedores.xlsx");
+};
+
     
+const generarReportePDF = () => {
+    const doc = new jsPDF("landscape");
 
-    const generarReportePDF = () => {
-        const doc = new jsPDF();
-        doc.text("Reporte de Proveedores", 14, 18);
-        doc.autoTable({
-            startY: 25,
-            head: [
-                [
-                    "ID",
-                    "Nombre",
-                    "Teléfono",
-                    "Email",
-                    "Dirección",
-                    "Tipo",
-                    "Pago",
-                    "Estado",
-                    "Registro",
-                ],
-            ],
-            body: proveedoresFiltrados.map((p) => [
-                p.id_Proveedor,
-                p.Nombre_Proveedor,
-                p.Telefono || "-",
-                p.Email || "-",
-                p.Direccion || "-",
-                p.Tipo_Distribuidor || "-",
-                p.Condiciones_Pago || "-",
-                p.Estado,
-                new Date(p.Fecha_Registro).toLocaleDateString(),
-            ]),
-        });
+    const imgURL = "https://i.pinimg.com/736x/76/fb/4a/76fb4a687980c6b31824bc0752d66f10.jpg";
 
-        doc.save("Proveedores.pdf");
-    };
+    // LOGO
+    doc.addImage(imgURL, "JPEG", 10, 10, 25, 25);
+
+    // TÍTULO
+    doc.setFontSize(20);
+    doc.text(
+        "Reporte de Proveedores - Almacén Rural",
+        doc.internal.pageSize.getWidth() / 2,
+        20,
+        { align: "center" }
+    );
+
+    // FECHA Y HORA
+    doc.setFontSize(12);
+    doc.text(
+        `Generado: ${new Date().toLocaleString()}`,
+        doc.internal.pageSize.getWidth() / 2,
+        28,
+        { align: "center" }
+    );
+
+    // TABLA
+    doc.autoTable({
+        startY: 40,
+        head: [[
+            "ID", "Nombre", "Teléfono", "Email", "Dirección",
+            "Tipo", "Pago", "Estado", "Registro"
+        ]],
+
+        body: proveedoresFiltrados.map((p) => [
+            p.id_Proveedor,
+            p.Nombre_Proveedor,
+            p.Telefono || "-",
+            p.Email || "-",
+            p.Direccion || "-",
+            p.Tipo_Distribuidor || "-",
+            p.Condiciones_Pago || "-",
+            p.Estado,
+            new Date(p.Fecha_Registro).toLocaleDateString(),
+        ]),
+
+        theme: "grid",
+        styles: { halign: "center", fontSize: 10 },
+        headStyles: { fillColor: [25, 135, 84], textColor: 255, halign: "center" },
+        footStyles: { halign: "center" },
+
+        didDrawPage: (data) => {
+            // NUMERO DE PAGINA
+            const page = doc.internal.getNumberOfPages();
+            doc.setFontSize(10);
+            doc.text(
+                `Página ${page}`,
+                doc.internal.pageSize.getWidth() - 20,
+                doc.internal.pageSize.getHeight() - 10
+            );
+        },
+    });
+
+    // FIRMA FINAL
+    doc.setFontSize(12);
+        doc.internal.pageSize.getWidth() / 2,
+        doc.internal.pageSize.getHeight() - 15,
+        { align: "center" }
+    
+    doc.save("Proveedores.pdf");
+};
 
     // ---------------------------------------------
     // RENDER PRINCIPAL
