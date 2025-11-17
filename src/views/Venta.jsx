@@ -1,6 +1,3 @@
-// ======================= VENTA.jsx =======================
-// ============== Versión moderna, limpia y mejorada ==============
-
 import { useState, useEffect } from "react";
 import { Container, Row, Col, Button, Card } from "react-bootstrap";
 
@@ -81,15 +78,15 @@ const Venta = () => {
 
       const ventasEnriquecidas = ventasRaw.map((v) => {
         const detalles = detallesRaw
-          .filter((d) => d.id_ventas === v.id_ventas)
+          .filter((d) => d.id_Venta === v.id_ventas || d.id_ventas === v.id_ventas) // por si varía el nombre del campo
           .map((d) => ({
             ...d,
             nombre_producto: mapaProductos[d.id_Producto] || "Producto eliminado",
           }));
 
-        const totalProductos = detalles.reduce((t, d) => t + d.Cantidad_Producto, 0);
+        const totalProductos = detalles.reduce((t, d) => t + (d.Cantidad_Producto || d.Cantidad || 0), 0);
         const totalMonto = detalles.reduce(
-          (t, d) => t + d.Cantidad_Producto * d.Precio_venta,
+          (t, d) => t + ((d.Cantidad_Producto || d.Cantidad || 0) * (d.Precio_venta || d.Precio || 0)),
           0
         );
 
@@ -99,7 +96,7 @@ const Venta = () => {
           detalles,
           totalProductos,
           totalMonto,
-          fechaBonita: new Date(v.Fe_Venta).toLocaleDateString("es-MX"),
+          fechaBonita: v.Fe_Venta ? new Date(v.Fe_Venta).toLocaleDateString("es-MX") : "—",
         };
       });
 
@@ -111,10 +108,11 @@ const Venta = () => {
     } catch (error) {
       console.error(error);
       alert("Error al cargar datos.");
+      setCargando(false);
     }
   };
 
-  // ======================= Busqueda =======================
+  // ======================= Búsqueda =======================
   const manejarCambioBusqueda = (e) => {
     const texto = e.target.value.toLowerCase();
     setTextoBusqueda(texto);
@@ -122,8 +120,8 @@ const Venta = () => {
     const filtradas = ventas.filter(
       (v) =>
         v.id_ventas.toString().includes(texto) ||
-        v.nombre_cliente.toLowerCase().includes(texto) ||
-        v.fechaBonita.includes(texto)
+        (v.nombre_cliente && v.nombre_cliente.toLowerCase().includes(texto)) ||
+        (v.fechaBonita && v.fechaBonita.includes(texto))
     );
 
     setVentasFiltradas(filtradas);
@@ -133,7 +131,6 @@ const Venta = () => {
   // ======================= PDF =======================
   const generarPDFVentas = () => {
     const doc = new jsPDF();
-
     doc.text("REPORTE DE VENTAS", 105, 20, { align: "center" });
 
     const tabla = ventasFiltradas.map((v) => [
@@ -159,7 +156,7 @@ const Venta = () => {
     const datos = [];
 
     ventas.forEach((v) => {
-      if (v.detalles.length === 0) {
+      if (!v.detalles || v.detalles.length === 0) {
         datos.push({
           "ID Venta": v.id_ventas,
           Cliente: v.nombre_cliente,
@@ -173,9 +170,9 @@ const Venta = () => {
             Cliente: v.nombre_cliente,
             Fecha: v.fechaBonita,
             Producto: d.nombre_producto,
-            Cantidad: d.Cantidad_Producto,
-            Precio: d.Precio_venta,
-            Subtotal: (d.Cantidad_Producto * d.Precio_venta).toFixed(2),
+            Cantidad: d.Cantidad_Producto || d.Cantidad,
+            Precio: d.Precio_venta || d.Precio,
+            Subtotal: ((d.Cantidad_Producto || d.Cantidad) * (d.Precio_venta || d.Precio)).toFixed(2),
           });
         });
       }
@@ -189,74 +186,137 @@ const Venta = () => {
     saveAs(new Blob([excel]), `Ventas_${hoy}.xlsx`);
   };
 
-  // ======================= Edición =======================
+  // ======================= Agregar Venta =======================
+  const agregarVenta = async () => {
+    if (!nuevaVenta.id_Cliente || detallesNuevos.length === 0) {
+      alert("Completa cliente y agrega al menos un producto.");
+      return;
+    }
+
+    try {
+      // 1) crear la venta
+      const ventaResp = await fetch("http://localhost:3000/api/registrarVenta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nuevaVenta),
+      });
+
+      if (!ventaResp.ok) throw new Error("Error al crear venta");
+      const created = await ventaResp.json();
+      const id_ventas = created.id_ventas || created.insertId || created.id; // admite varias respuestas
+
+      // 2) crear detalles
+      for (const d of detallesNuevos) {
+        const body = {
+          id_Venta: id_ventas,
+          id_Producto: d.id_Producto,
+          Precio_venta: d.Precio_venta || d.precio,
+          Cantidad_Producto: d.Cantidad_Producto || d.cantidad,
+        };
+        await fetch("http://localhost:3000/api/registrarDetalleVenta", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+      }
+
+      await obtenerDatos();
+      setMostrarModalRegistro(false);
+      setNuevaVenta({ id_Cliente: "", Fe_Venta: hoy });
+      setDetallesNuevos([]);
+    } catch (error) {
+      console.error(error);
+      alert("Error al registrar venta.");
+    }
+  };
+
+  // ======================= Editar Venta =======================
   const abrirModalEdicion = (venta) => {
     setVentaAEditar(venta);
 
     setVentaEnEdicion({
       id_Cliente: venta.id_Cliente,
-      Fe_Venta: venta.Fe_Venta.split("T")[0],
+      Fe_Venta: venta.Fe_Venta ? venta.Fe_Venta.split("T")[0] : hoy,
+      id_ventas: venta.id_ventas,
     });
 
     setDetallesNuevos(
-      venta.detalles.map((d) => ({
+      (venta.detalles || []).map((d) => ({
+        id_DetalleVenta: d.id_DetalleVenta || d.id_DetalleVenta || d.id_Detalle || d.id,
         id_Producto: d.id_Producto,
         nombre_producto: d.nombre_producto,
-        Cantidad_Producto: d.Cantidad_Producto,
-        Precio_venta: d.Precio_venta,
+        Cantidad_Producto: d.Cantidad_Producto || d.Cantidad,
+        Precio_venta: d.Precio_venta || d.Precio,
       }))
     );
 
     setMostrarModalEdicion(true);
   };
 
-  const actualizarVentaEditada = (ventaActualizada) => {
-    const mapaClientes = {};
-    clientes.forEach((c) => (mapaClientes[c.id_Cliente] = c.Nombre_Cliente));
+  const actualizarVenta = async () => {
+    try {
+      // actualizar la cabecera
+      await fetch(`http://localhost:3000/api/actualizarVenta/${ventaAEditar.id_ventas}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(ventaEnEdicion),
+      });
 
-    const ventaConNombre = {
-      ...ventaActualizada,
-      nombre_cliente: mapaClientes[ventaActualizada.id_Cliente],
-      fechaBonita: new Date(ventaActualizada.Fe_Venta).toLocaleDateString("es-MX"),
-    };
+      // obtener detalles actuales y borrarlos (si tu backend los maneja en cascada podrías omitir)
+      const respDetalles = await fetch("http://localhost:3000/api/detallesventas");
+      const todos = await respDetalles.json();
+      const actuales = todos.filter((d) => d.id_Venta === ventaAEditar.id_ventas || d.id_ventas === ventaAEditar.id_ventas);
 
-    setVentas((prev) =>
-      prev.map((v) => (v.id_ventas === ventaActualizada.id_ventas ? ventaConNombre : v))
-    );
+      for (const d of actuales) {
+        const idDetalle = d.id_DetalleVenta || d.id_Detalle || d.id;
+        await fetch(`http://localhost:3000/api/eliminarDetalleVenta/${idDetalle}`, { method: "DELETE" });
+      }
 
-    setVentasFiltradas((prev) =>
-      prev.map((v) =>
-        v.id_ventas === ventaActualizada.id_ventas ? ventaConNombre : v
-      )
-    );
+      // agregar los nuevos
+      for (const d of detallesNuevos) {
+        await fetch("http://localhost:3000/api/registrarDetalleVenta", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id_Venta: ventaAEditar.id_ventas,
+            id_Producto: d.id_Producto,
+            Precio_venta: d.Precio_venta,
+            Cantidad_Producto: d.Cantidad_Producto,
+          }),
+        });
+      }
+
+      await obtenerDatos();
+      setMostrarModalEdicion(false);
+      setVentaAEditar(null);
+      setVentaEnEdicion(null);
+      setDetallesNuevos([]);
+    } catch (error) {
+      console.error(error);
+      alert("Error al actualizar venta.");
+    }
   };
 
-  // ======================= Eliminar =======================
+  // ======================= Eliminar Venta =======================
   const confirmarEliminacion = async () => {
     try {
-      await fetch(
-        `http://localhost:3000/api/eliminarVenta/${ventaAEliminar.id_ventas}`,
-        { method: "DELETE" }
-      );
+      await fetch(`http://localhost:3000/api/eliminarVenta/${ventaAEliminar.id_ventas}`, {
+        method: "DELETE",
+      });
 
-      setVentas((prev) =>
-        prev.filter((v) => v.id_ventas !== ventaAEliminar.id_ventas)
-      );
-
-      setVentasFiltradas((prev) =>
-        prev.filter((v) => v.id_ventas !== ventaAEliminar.id_ventas)
-      );
-
+      setVentas((prev) => prev.filter((v) => v.id_ventas !== ventaAEliminar.id_ventas));
+      setVentasFiltradas((prev) => prev.filter((v) => v.id_ventas !== ventaAEliminar.id_ventas));
       setMostrarModalEliminar(false);
     } catch (error) {
+      console.error(error);
       alert("No se pudo eliminar.");
     }
   };
 
-  // ======================= Detalles =======================
+  // ======================= Ver detalles =======================
   const verDetalles = (id_ventas) => {
     const venta = ventas.find((v) => v.id_ventas === id_ventas);
-    setDetallesVenta(venta.detalles);
+    setDetallesVenta(venta ? venta.detalles : []);
     setMostrarModalDetalles(true);
   };
 
@@ -278,25 +338,15 @@ const Venta = () => {
     >
       <Container style={{ maxWidth: "1100px" }}>
         <Card className="p-4 rounded-4 shadow-lg">
-          <h2 className="text-center text-primary fw-bold mb-4">
-            Gestión de Ventas
-          </h2>
+          <h2 className="text-center text-primary fw-bold mb-4">Gestión de Ventas</h2>
 
-          {/* BUSQUEDA + ACCIONES */}
           <Row className="mb-4 align-items-center">
             <Col md={7}>
-              <CuadroBusquedas
-                textoBusqueda={textoBusqueda}
-                manejarCambioBusqueda={manejarCambioBusqueda}
-              />
+              <CuadroBusquedas textoBusqueda={textoBusqueda} manejarCambioBusqueda={manejarCambioBusqueda} />
             </Col>
 
             <Col className="text-end">
-              <Button
-                variant="success"
-                className="me-2"
-                onClick={() => setMostrarModalRegistro(true)}
-              >
+              <Button variant="success" className="me-2" onClick={() => setMostrarModalRegistro(true)}>
                 + Venta
               </Button>
 
@@ -310,7 +360,6 @@ const Venta = () => {
             </Col>
           </Row>
 
-          {/* TABLA */}
           <TablaVentas
             ventas={ventasPaginadas}
             cargando={cargando}
@@ -326,7 +375,6 @@ const Venta = () => {
             establecerPaginaActual={setPaginaActual}
           />
 
-          {/* MODALES */}
           <ModalRegistroVenta
             mostrar={mostrarModalRegistro}
             setMostrar={setMostrarModalRegistro}
@@ -336,7 +384,8 @@ const Venta = () => {
             setDetalles={setDetallesNuevos}
             clientes={clientes}
             productos={productos}
-            onSuccess={obtenerDatos}
+            agregarVenta={agregarVenta}
+            hoy={hoy}
           />
 
           <ModalEdicionVenta
@@ -349,10 +398,7 @@ const Venta = () => {
             setDetalles={setDetallesNuevos}
             clientes={clientes}
             productos={productos}
-            onSuccess={(ventaActualizada) => {
-              actualizarVentaEditada(ventaActualizada);
-              setMostrarModalEdicion(false);
-            }}
+            actualizarVenta={actualizarVenta}
           />
 
           <ModalEliminacionVenta
@@ -362,11 +408,7 @@ const Venta = () => {
             confirmarEliminacion={confirmarEliminacion}
           />
 
-          <ModalDetallesVenta
-            mostrarModal={mostrarModalDetalles}
-            setMostrarModal={setMostrarModalDetalles}
-            detalles={detallesVenta}
-          />
+          <ModalDetallesVenta mostrarModal={mostrarModalDetalles} setMostrarModal={setMostrarModalDetalles} detalles={detallesVenta} />
         </Card>
       </Container>
     </div>
