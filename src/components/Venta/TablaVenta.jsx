@@ -30,8 +30,6 @@ const TablaVenta = ({
             <th>ID</th>
             <th>Fecha</th>
             <th>Cliente</th>
-            <th>Total</th>
-
             <th>Acciones</th>
           </tr>
         </thead>
@@ -40,8 +38,7 @@ const TablaVenta = ({
             <tr key={v.id_ventas}>
               <td>{v.id_ventas}</td>
               <td>{new Date(v.Fe_Venta).toLocaleString()}</td>
-              <td>{v.nombre_cliente || v.id_cliente}</td>
-              <td>C$ {parseFloat(v.total_venta || 0).toFixed(2)}</td>
+              <td>{v.nombre_cliente || v.id_cliente || 'N/A'}</td>
               <td>
                 <Button
                   size="sm"
