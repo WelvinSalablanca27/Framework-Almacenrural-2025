@@ -1,17 +1,18 @@
 import { Modal, Button } from "react-bootstrap";
 
-const ModalEliminacionVenta = ({ mostrar, setMostrar, compra, confirmarEliminacion }) => {
+const ModalEliminacionVenta = ({ mostrar, setMostrar, venta, confirmarEliminacion }) => {
   return (
-    <Modal show={mostrar} onHide={setMostrar} backdrop="static">
+    <Modal show={mostrar} onHide={() => setMostrar(false)} backdrop="static">
       <Modal.Header closeButton>
-        <Modal.Title>Eliminar Compra</Modal.Title>
+        <Modal.Title>Eliminar Venta</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        ¿Está seguro de eliminar la compra del proveedor <b>{compra?.nombre_proveedor}</b>?
+        <p>¿Estás seguro de eliminar la venta <strong>#{venta?.id_venta}</strong>?</p>
+        <p className="text-danger">Esta acción no se puede deshacer.</p>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="secondary" onClick={setMostrar}>Cancelar</Button>
-        <Button variant="danger" onClick={confirmarEliminacion}>Eliminar</Button>
+        <Button variant="secondary" onClick={() => setMostrar(false)}>Cancelar</Button>
+        <Button variant="danger" onClick={confirmarEliminacion}>Sí, eliminar</Button>
       </Modal.Footer>
     </Modal>
   );

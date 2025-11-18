@@ -5,99 +5,108 @@ import AsyncSelect from "react-select/async";
 const ModalEdicionVenta = ({
   mostrar,
   setMostrar,
-  venta,
   ventaEnEdicion,
   setVentaEnEdicion,
   detalles,
   setDetalles,
   clientes,
   productos,
-  onSuccess
+  actualizarVenta,
 }) => {
-
   const [clienteSel, setClienteSel] = useState(null);
   const [productoSel, setProductoSel] = useState(null);
-  const [nuevoDetalle, setNuevoDetalle] = useState({ id_Producto: "", Cantidad_Producto: "" });
+  const [nuevoDetalle, setNuevoDetalle] = useState({
+    id_Producto: "",
+    Cantidad_Producto: "",
+    Precio_venta: 0,
+  });
 
-  // ============ Cargar cliente al abrir ============
+  const total =
+    detalles?.reduce((s, d) => s + d.Cantidad_Producto * d.Precio_venta, 0) || 0;
+
+  // ================== CARGAR CLIENTE ==================
   useEffect(() => {
-    if (venta && clientes.length > 0) {
-      const cliente = clientes.find(c => c.id_Cliente === venta.id_Cliente);
+    if (ventaEnEdicion && clientes.length > 0) {
+      const cliente = clientes.find(c => c.id_Cliente === ventaEnEdicion.id_Cliente);
 
-      setClienteSel(cliente ? {
-        value: cliente.id_Cliente,
-        label: cliente.Nombre_Cliente        // ← CORREGIDO
-      } : null);
+      if (cliente) {
+        setClienteSel({
+          value: cliente.id_Cliente,
+          label: `${cliente.Nombre1} ${cliente.Nombre2} ${cliente.Apellido1} ${cliente.Apellido2}`,
+        });
+      }
     }
-  }, [venta, clientes]);
+  }, [ventaEnEdicion, clientes]);
 
-  // ============ TOTAL =============
-  const total = detalles?.reduce(
-    (t, d) => t + (d.Cantidad_Producto * d.Precio_venta),
-    0
-  ) || 0;
+  // ================== BUSCAR CLIENTES ==================
+const cargarClientes = (inputValue, callback) => {
+  const texto = inputValue?.toLowerCase() || "";
+  const filtrados = clientes.filter((c) =>
+    `${c.Nombre1} ${c.Apellido1}`.toLowerCase().includes(texto)
+  );
 
-  // ============ Cargar opciones clientes ============
-  const cargarOpcionesClientes = (input, callback) => {
-    const filtro = input.toLowerCase();
+  callback(
+    filtrados.map((c) => ({
+      value: c.id_Cliente,
+      label: `${c.Nombre1} ${c.Nombre2 || ""} ${c.Apellido1} ${
+        c.Apellido2 || ""
+      }`.trim(),
+    }))
+  );
+};
 
-    const filtrados = clientes.filter(c =>
-      (c.Nombre_Cliente || "").toLowerCase().includes(filtro)
-    );
+// ================== BUSCAR PRODUCTOS ==================
+const cargarProductos = (inputValue, callback) => {
+  const texto = inputValue?.toLowerCase() || "";
+  const filtrados = productos.filter((p) =>
+    p.Nombre_Prod.toLowerCase().includes(texto)
+  );
 
-    callback(
-      filtrados.map(c => ({
-        value: c.id_Cliente,
-        label: c.Nombre_Cliente            // ← AQUÍ EL NOMBRE REAL
-      }))
-    );
-  };
+  callback(
+    filtrados.map((p) => ({
+      value: p.id_Producto,
+      label: `${p.Nombre_Prod} (Stock: ${p.stock})`,
+      precio: p.Precio_Venta,
+      stock: p.stock,
+      productoCompleto: p,
+    }))
+  );
+};
 
-  // ============ Cargar productos ============
-  const cargarOpcionesProductos = (input, callback) => {
-    const filtro = input.toLowerCase();
 
-    const filtrados = productos.filter(p =>
-      (p.Nombre_Producto || "").toLowerCase().includes(filtro)
-    );
-
-    callback(
-      filtrados.map(p => ({
-        value: p.id_Producto,
-        label: p.Nombre_Producto,
-        precio: p.Precio_venta,
-        stock: p.stock
-      }))
-    );
-  };
-
-  // ============ Selección cliente ============
-  const manejarCliente = (sel) => {
+  // ================== MANEJAR CAMBIOS ==================
+  const manejarCliente = sel => {
     setClienteSel(sel);
     setVentaEnEdicion(prev => ({
       ...prev,
-      id_Cliente: sel ? sel.value : null
+      id_Cliente: sel ? sel.value : "",
     }));
   };
 
-  // ============ Selección producto ============
-  const manejarProducto = (sel) => {
+  const manejarProducto = sel => {
     setProductoSel(sel);
     setNuevoDetalle(prev => ({
       ...prev,
       id_Producto: sel ? sel.value : "",
-      Precio_venta: sel ? sel.precio : 0
+      Precio_venta: sel ? sel.precio : 0,
     }));
   };
 
-  // ============ Agregar detalle ============
+  // ================== AGREGAR DETALLE ==================
   const agregarDetalle = () => {
-    if (!nuevoDetalle.id_Producto || nuevoDetalle.Cantidad_Producto <= 0) {
-      alert("Selecciona un producto y cantidad válida.");
+    if (!nuevoDetalle.id_Producto || !nuevoDetalle.Cantidad_Producto) {
+      alert("Selecciona un producto y una cantidad válida.");
       return;
     }
 
-    const prod = productos.find(p => p.id_Producto === nuevoDetalle.id_Producto);
+    const prod = productos.find(
+      p => p.id_Producto === parseInt(nuevoDetalle.id_Producto)
+    );
+
+    if (!prod) {
+      alert("Producto no encontrado.");
+      return;
+    }
 
     if (nuevoDetalle.Cantidad_Producto > prod.stock) {
       alert(`Stock insuficiente: ${prod.stock}`);
@@ -108,56 +117,73 @@ const ModalEdicionVenta = ({
       ...prev,
       {
         id_Producto: prod.id_Producto,
-        nombre_producto: prod.Nombre_Producto,   // ← NOMBRE REAL
+        nombre_producto: prod.Nombre_Prod,
         Cantidad_Producto: parseInt(nuevoDetalle.Cantidad_Producto),
-        Precio_venta: prod.Precio_venta
-      }
+        Precio_venta: parseFloat(prod.Precio_Venta),
+      },
     ]);
 
+    setNuevoDetalle({ id_Producto: "", Cantidad_Producto: "", Precio_venta: 0 });
     setProductoSel(null);
-    setNuevoDetalle({ id_Producto: "", Cantidad_Producto: "" });
   };
 
-
   return (
-    <Modal show={mostrar} onHide={() => setMostrar(false)} size="xl">
+    <Modal
+      backdrop="static"
+      show={mostrar}
+      onHide={() => setMostrar(false)}
+      size="xl"
+      centered
+    >
       <Modal.Header closeButton>
-        <Modal.Title>Editar Venta #{venta?.id_ventas}</Modal.Title>
+        <Modal.Title>Editar Venta</Modal.Title>
       </Modal.Header>
 
       <Modal.Body>
         <Form>
-
           <Row>
             <Col md={6}>
-              <Form.Label>Cliente</Form.Label>
-              <AsyncSelect
-                cacheOptions
-                defaultOptions
-                loadOptions={cargarOpcionesClientes}  // ← CORREGIDO
-                onChange={manejarCliente}
-                value={clienteSel}
-                placeholder="Buscar cliente..."
-                isClearable
-              />
+              <Form.Group>
+                <Form.Label>Cliente</Form.Label>
+                <AsyncSelect
+                  cacheOptions
+                  defaultOptions
+                  loadOptions={cargarClientes}
+                  onChange={manejarCliente}
+                  value={clienteSel}
+                  placeholder="Buscar cliente..."
+                  isClearable
+                />
+              </Form.Group>
             </Col>
 
             <Col md={6}>
-              <Form.Label>Fecha</Form.Label>
-              <Form.Control type="text" readOnly value={ventaEnEdicion?.Fe_Venta} />
+              <Form.Group>
+                <Form.Label>Fecha de Venta</Form.Label>
+                <Form.Control
+                  type="date"
+                  value={ventaEnEdicion?.Fe_Venta?.split("T")[0] || ""}
+                  max={new Date().toISOString().split("T")[0]}
+                  onChange={(e) =>
+                    setVentaEnEdicion((prev) => ({
+                      ...prev,
+                      Fe_Venta: e.target.value,
+                    }))
+                  }
+                />
+              </Form.Group>
             </Col>
           </Row>
 
           <hr />
-
           <h5>Agregar Producto</h5>
 
-          <Row>
-            <Col md={6}>
+          <Row className="align-items-end">
+            <Col md={5}>
               <AsyncSelect
                 cacheOptions
                 defaultOptions
-                loadOptions={cargarOpcionesProductos}
+                loadOptions={cargarProductos}
                 onChange={manejarProducto}
                 value={productoSel}
                 placeholder="Buscar producto..."
@@ -171,26 +197,32 @@ const ModalEdicionVenta = ({
                 placeholder="Cantidad"
                 min="1"
                 value={nuevoDetalle.Cantidad_Producto}
-                onChange={e => setNuevoDetalle({
-                  ...nuevoDetalle,
-                  Cantidad_Producto: e.target.value
-                })}
+                onChange={(e) =>
+                  setNuevoDetalle((prev) => ({
+                    ...prev,
+                    Cantidad_Producto: e.target.value,
+                  }))
+                }
               />
             </Col>
 
-            <Col md={3}>
-              <Button variant="success" onClick={agregarDetalle} style={{ width: "100%" }}>
+            <Col md={4}>
+              <Button
+                variant="success"
+                onClick={agregarDetalle}
+                style={{ width: "100%" }}
+              >
                 Agregar
               </Button>
             </Col>
           </Row>
 
-          {detalles.length > 0 && (
-            <Table striped bordered className="mt-3">
+          {detalles?.length > 0 && (
+            <Table striped bordered hover className="mt-3">
               <thead>
                 <tr>
                   <th>Producto</th>
-                  <th>Cantidad</th>
+                  <th>Cant.</th>
                   <th>Precio</th>
                   <th>Subtotal</th>
                   <th></th>
@@ -198,41 +230,62 @@ const ModalEdicionVenta = ({
               </thead>
 
               <tbody>
-                {detalles.map((d, i) => (
-                  <tr key={i}>
-                    <td>{d.nombre_producto}</td>
-                    <td>{d.Cantidad_Producto}</td>
-                    <td>C$ {d.Precio_venta.toFixed(2)}</td>
-                    <td>C$ {(d.Cantidad_Producto * d.Precio_venta).toFixed(2)}</td>
-                    <td>
-                      <Button size="sm" variant="danger" onClick={() => {
-                        setDetalles(prev => prev.filter((_, X) => X !== i))
-                      }}>X</Button>
-                    </td>
-                  </tr>
-                ))}
+                {detalles.map((d, i) => {
+                  const cantidad = Number(d.Cantidad_Producto) || 0;
+                  const precio = Number(d.Precio_venta) || 0;
+
+                  return (
+                    <tr key={i}>
+                      <td>{d.nombre_producto}</td>
+                      <td>{cantidad}</td>
+                      <td>C$ {precio.toFixed(2)}</td>
+                      <td>C$ {(cantidad * precio).toFixed(2)}</td>
+                      <td>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          onClick={() =>
+                            setDetalles((prev) =>
+                              prev.filter((_, idx) => idx !== i)
+                            )
+                          }
+                        >
+                          X
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
 
               <tfoot>
                 <tr>
-                  <td colSpan={3} className="text-end"><strong>Total:</strong></td>
-                  <td colSpan={2}><strong>C$ {total.toFixed(2)}</strong></td>
+                  <td colSpan={3} className="text-end">
+                    <strong>Total:</strong>
+                  </td>
+                  <td colSpan={2}>
+                    <strong>C$ {total.toFixed(2)}</strong>
+                  </td>
                 </tr>
               </tfoot>
-
             </Table>
           )}
-
         </Form>
       </Modal.Body>
 
       <Modal.Footer>
-        <Button variant="secondary" onClick={() => setMostrar(false)}>Cancelar</Button>
-        <Button variant="primary" onClick={() => onSuccess(ventaEnEdicion)}>
-          Actualizar Venta
+        <Button variant="secondary" onClick={() => setMostrar(false)}>
+          Cancelar
+        </Button>
+
+        <Button
+          variant="primary"
+          onClick={actualizarVenta}
+          disabled={!ventaEnEdicion?.id_Cliente || detalles.length === 0}
+        >
+          Guardar Cambios
         </Button>
       </Modal.Footer>
-
     </Modal>
   );
 };

@@ -57,13 +57,12 @@ const Venta = () => {
     try {
       setCargando(true);
 
-      const [resVentas, resClientes, resProductos, resDetalles] =
-        await Promise.all([
-          fetch("http://localhost:3000/api/ventas"),
-          fetch("http://localhost:3000/api/clientes"),
-          fetch("http://localhost:3000/api/producto"),
-          fetch("http://localhost:3000/api/detallesventas"),
-        ]);
+      const [resVentas, resClientes, resProductos, resDetalles] = await Promise.all([
+        fetch("http://localhost:3001/api/ventas"),
+        fetch("http://localhost:3001/api/clientes"),
+        fetch("http://localhost:3001/api/producto"),
+        fetch("http://localhost:3001/api/detallesventas"),
+      ]);
 
       const ventasRaw = await resVentas.json();
       const clientesRaw = await resClientes.json();
@@ -78,17 +77,16 @@ const Venta = () => {
 
       const ventasEnriquecidas = ventasRaw.map((v) => {
         const detalles = detallesRaw
-          .filter((d) => d.id_Venta === v.id_ventas || d.id_ventas === v.id_ventas) // por si varía el nombre del campo
+          .filter((d) => d.id_Venta === v.id_ventas)
           .map((d) => ({
             ...d,
             nombre_producto: mapaProductos[d.id_Producto] || "Producto eliminado",
+            Cantidad_Producto: d.Cantidad_Producto || d.Cantidad || 0,
+            Precio_venta: d.Precio_venta || d.Precio || 0,
           }));
 
-        const totalProductos = detalles.reduce((t, d) => t + (d.Cantidad_Producto || d.Cantidad || 0), 0);
-        const totalMonto = detalles.reduce(
-          (t, d) => t + ((d.Cantidad_Producto || d.Cantidad || 0) * (d.Precio_venta || d.Precio || 0)),
-          0
-        );
+        const totalProductos = detalles.reduce((t, d) => t + d.Cantidad_Producto, 0);
+        const totalMonto = detalles.reduce((t, d) => t + d.Cantidad_Producto * d.Precio_venta, 0);
 
         return {
           ...v,
@@ -154,7 +152,6 @@ const Venta = () => {
   // ======================= Excel =======================
   const exportarExcelVentas = () => {
     const datos = [];
-
     ventas.forEach((v) => {
       if (!v.detalles || v.detalles.length === 0) {
         datos.push({
@@ -170,9 +167,9 @@ const Venta = () => {
             Cliente: v.nombre_cliente,
             Fecha: v.fechaBonita,
             Producto: d.nombre_producto,
-            Cantidad: d.Cantidad_Producto || d.Cantidad,
-            Precio: d.Precio_venta || d.Precio,
-            Subtotal: ((d.Cantidad_Producto || d.Cantidad) * (d.Precio_venta || d.Precio)).toFixed(2),
+            Cantidad: d.Cantidad_Producto,
+            Precio: d.Precio_venta,
+            Subtotal: (d.Cantidad_Producto * d.Precio_venta).toFixed(2),
           });
         });
       }
@@ -194,29 +191,26 @@ const Venta = () => {
     }
 
     try {
-      // 1) crear la venta
-      const ventaResp = await fetch("http://localhost:3000/api/registrarVenta", {
+      const ventaResp = await fetch("http://localhost:3001/api/registrarVenta", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(nuevaVenta),
       });
-
       if (!ventaResp.ok) throw new Error("Error al crear venta");
-      const created = await ventaResp.json();
-      const id_ventas = created.id_ventas || created.insertId || created.id; // admite varias respuestas
 
-      // 2) crear detalles
+      const created = await ventaResp.json();
+      const id_ventas = created.id_ventas || created.insertId || created.id;
+
       for (const d of detallesNuevos) {
-        const body = {
-          id_Venta: id_ventas,
-          id_Producto: d.id_Producto,
-          Precio_venta: d.Precio_venta || d.precio,
-          Cantidad_Producto: d.Cantidad_Producto || d.cantidad,
-        };
-        await fetch("http://localhost:3000/api/registrarDetalleVenta", {
+        await fetch("http://localhost:3001/api/registrarDetalleVenta", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify({
+            id_Venta: id_ventas,
+            id_Producto: d.id_Producto,
+            Precio_venta: d.Precio_venta,
+            Cantidad_Producto: d.Cantidad_Producto,
+          }),
         });
       }
 
@@ -234,19 +228,21 @@ const Venta = () => {
   const abrirModalEdicion = (venta) => {
     setVentaAEditar(venta);
 
+    // Datos del formulario
     setVentaEnEdicion({
+      id_ventas: venta.id_ventas,
       id_Cliente: venta.id_Cliente,
       Fe_Venta: venta.Fe_Venta ? venta.Fe_Venta.split("T")[0] : hoy,
-      id_ventas: venta.id_ventas,
     });
 
+    // Copia de detalles
     setDetallesNuevos(
       (venta.detalles || []).map((d) => ({
-        id_DetalleVenta: d.id_DetalleVenta || d.id_DetalleVenta || d.id_Detalle || d.id,
+        id_DetalleVenta: d.id_DetalleVenta || d.id,
         id_Producto: d.id_Producto,
         nombre_producto: d.nombre_producto,
-        Cantidad_Producto: d.Cantidad_Producto || d.Cantidad,
-        Precio_venta: d.Precio_venta || d.Precio,
+        Cantidad_Producto: d.Cantidad_Producto,
+        Precio_venta: d.Precio_venta,
       }))
     );
 
@@ -255,33 +251,39 @@ const Venta = () => {
 
   const actualizarVenta = async () => {
     try {
-      // actualizar la cabecera
-      await fetch(`http://localhost:3000/api/actualizarVenta/${ventaAEditar.id_ventas}`, {
+      if (!ventaEnEdicion.id_Cliente || detallesNuevos.length === 0) {
+        alert("Completa cliente y agrega al menos un producto.");
+        return;
+      }
+
+      // 1) Actualizar cabecera
+      await fetch(`http://localhost:3001/api/actualizarVenta/${ventaAEditar.id_ventas}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(ventaEnEdicion),
       });
 
-      // obtener detalles actuales y borrarlos (si tu backend los maneja en cascada podrías omitir)
-      const respDetalles = await fetch("http://localhost:3000/api/detallesventas");
+      // 2) Eliminar detalles antiguos
+      const respDetalles = await fetch("http://localhost:3001/api/detallesventas");
       const todos = await respDetalles.json();
-      const actuales = todos.filter((d) => d.id_Venta === ventaAEditar.id_ventas || d.id_ventas === ventaAEditar.id_ventas);
+      const actuales = todos.filter((d) => d.id_Venta === ventaAEditar.id_ventas);
 
       for (const d of actuales) {
-        const idDetalle = d.id_DetalleVenta || d.id_Detalle || d.id;
-        await fetch(`http://localhost:3000/api/eliminarDetalleVenta/${idDetalle}`, { method: "DELETE" });
+        await fetch(`http://localhost:3001/api/eliminarDetalleVenta/${d.id_DetalleVenta || d.id}`, {
+          method: "DELETE",
+        });
       }
 
-      // agregar los nuevos
+      // 3) Agregar detalles nuevos
       for (const d of detallesNuevos) {
-        await fetch("http://localhost:3000/api/registrarDetalleVenta", {
+        await fetch("http://localhost:3001/api/registrarDetalleVenta", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             id_Venta: ventaAEditar.id_ventas,
             id_Producto: d.id_Producto,
-            Precio_venta: d.Precio_venta,
             Cantidad_Producto: d.Cantidad_Producto,
+            Precio_venta: d.Precio_venta,
           }),
         });
       }
@@ -300,10 +302,7 @@ const Venta = () => {
   // ======================= Eliminar Venta =======================
   const confirmarEliminacion = async () => {
     try {
-      await fetch(`http://localhost:3000/api/eliminarVenta/${ventaAEliminar.id_ventas}`, {
-        method: "DELETE",
-      });
-
+      await fetch(`http://localhost:3001/api/eliminarVenta/${ventaAEliminar.id_ventas}`, { method: "DELETE" });
       setVentas((prev) => prev.filter((v) => v.id_ventas !== ventaAEliminar.id_ventas));
       setVentasFiltradas((prev) => prev.filter((v) => v.id_ventas !== ventaAEliminar.id_ventas));
       setMostrarModalEliminar(false);
@@ -313,6 +312,10 @@ const Venta = () => {
     }
   };
 
+
+  
+
+
   // ======================= Ver detalles =======================
   const verDetalles = (id_ventas) => {
     const venta = ventas.find((v) => v.id_ventas === id_ventas);
@@ -320,7 +323,6 @@ const Venta = () => {
     setMostrarModalDetalles(true);
   };
 
-  // ======================= Render =======================
   const ventasPaginadas = ventasFiltradas.slice(
     (paginaActual - 1) * elementosPorPagina,
     paginaActual * elementosPorPagina
@@ -338,22 +340,32 @@ const Venta = () => {
     >
       <Container style={{ maxWidth: "1100px" }}>
         <Card className="p-4 rounded-4 shadow-lg">
-          <h2 className="text-center text-primary fw-bold mb-4">Gestión de Ventas</h2>
+          <h2 className="text-center text-primary fw-bold mb-4">
+            Gestión de Ventas
+          </h2>
 
           <Row className="mb-4 align-items-center">
             <Col md={7}>
-              <CuadroBusquedas textoBusqueda={textoBusqueda} manejarCambioBusqueda={manejarCambioBusqueda} />
+              <CuadroBusquedas
+                textoBusqueda={textoBusqueda}
+                manejarCambioBusqueda={manejarCambioBusqueda}
+              />
             </Col>
-
             <Col className="text-end">
-              <Button variant="success" className="me-2" onClick={() => setMostrarModalRegistro(true)}>
+              <Button
+                variant="success"
+                className="me-2"
+                onClick={() => setMostrarModalRegistro(true)}
+              >
                 + Venta
               </Button>
-
-              <Button variant="danger" className="me-2" onClick={generarPDFVentas}>
+              <Button
+                variant="danger"
+                className="me-2"
+                onClick={generarPDFVentas}
+              >
                 PDF
               </Button>
-
               <Button variant="info" onClick={exportarExcelVentas}>
                 Excel
               </Button>
@@ -384,7 +396,7 @@ const Venta = () => {
             setDetalles={setDetallesNuevos}
             clientes={clientes}
             productos={productos}
-            agregarVenta={agregarVenta}
+            onGuardarVenta={agregarVenta}
             hoy={hoy}
           />
 
@@ -408,7 +420,11 @@ const Venta = () => {
             confirmarEliminacion={confirmarEliminacion}
           />
 
-          <ModalDetallesVenta mostrarModal={mostrarModalDetalles} setMostrarModal={setMostrarModalDetalles} detalles={detallesVenta} />
+          <ModalDetallesVenta
+            mostrarModal={mostrarModalDetalles}
+            setMostrarModal={setMostrarModalDetalles}
+            detalles={detallesVenta}
+          />
         </Card>
       </Container>
     </div>
