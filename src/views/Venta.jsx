@@ -1,14 +1,11 @@
 import { useState, useEffect } from "react";
 import { Container, Row, Col, Button, Card } from "react-bootstrap";
-
 import TablaVentas from "../components/Venta/TablaVenta";
 import CuadroBusquedas from "../components/busquedas/CuadroBusquedas";
-
 import ModalRegistroVenta from "../components/Venta/ModalRegistrarVenta";
 import ModalEdicionVenta from "../components/Venta/ModalEdicionVenta";
 import ModalEliminacionVenta from "../components/Venta/ModalEliminacionVenta";
 import ModalDetallesVenta from "../components/detalle_venta/ModalDetallesVenta";
-
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import * as XLSX from "xlsx";
@@ -21,32 +18,22 @@ const Venta = () => {
   const [ventas, setVentas] = useState([]);
   const [ventasFiltradas, setVentasFiltradas] = useState([]);
   const [cargando, setCargando] = useState(true);
-
   const [clientes, setClientes] = useState([]);
   const [productos, setProductos] = useState([]);
-
   const [mostrarModalRegistro, setMostrarModalRegistro] = useState(false);
   const [mostrarModalEdicion, setMostrarModalEdicion] = useState(false);
   const [mostrarModalEliminar, setMostrarModalEliminar] = useState(false);
   const [mostrarModalDetalles, setMostrarModalDetalles] = useState(false);
-
   const [ventaAEditar, setVentaAEditar] = useState(null);
   const [ventaAEliminar, setVentaAEliminar] = useState(null);
   const [detallesVenta, setDetallesVenta] = useState([]);
-
   const [ventaEnEdicion, setVentaEnEdicion] = useState(null);
   const [detallesNuevos, setDetallesNuevos] = useState([]);
-
   const [textoBusqueda, setTextoBusqueda] = useState("");
   const [paginaActual, setPaginaActual] = useState(1);
   const elementosPorPagina = 5;
-
   const hoy = new Date().toISOString().split("T")[0];
-
-  const [nuevaVenta, setNuevaVenta] = useState({
-    id_Cliente: "",
-    Fe_Venta: hoy,
-  });
+  const [nuevaVenta, setNuevaVenta] = useState({ id_Cliente: "", Fe_Venta: hoy });
 
   // ======================= Cargar datos =======================
   useEffect(() => {
@@ -56,12 +43,11 @@ const Venta = () => {
   const obtenerDatos = async () => {
     try {
       setCargando(true);
-
       const [resVentas, resClientes, resProductos, resDetalles] = await Promise.all([
-        fetch("http://localhost:3001/api/ventas"),
-        fetch("http://localhost:3001/api/clientes"),
-        fetch("http://localhost:3001/api/producto"),
-        fetch("http://localhost:3001/api/detallesventas"),
+        fetch("http://localhost:3001/api/Venta"),
+        fetch("http://localhost:3001/api/Cliente"),
+        fetch("http://localhost:3001/api/Producto"),
+        fetch("http://localhost:3001/api/Detalles_venta"),
       ]);
 
       const ventasRaw = await resVentas.json();
@@ -178,7 +164,6 @@ const Venta = () => {
     const ws = XLSX.utils.json_to_sheet(datos);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Ventas");
-
     const excel = XLSX.write(wb, { type: "array", bookType: "xlsx" });
     saveAs(new Blob([excel]), `Ventas_${hoy}.xlsx`);
   };
@@ -196,6 +181,7 @@ const Venta = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(nuevaVenta),
       });
+
       if (!ventaResp.ok) throw new Error("Error al crear venta");
 
       const created = await ventaResp.json();
@@ -227,15 +213,12 @@ const Venta = () => {
   // ======================= Editar Venta =======================
   const abrirModalEdicion = (venta) => {
     setVentaAEditar(venta);
-
-    // Datos del formulario
     setVentaEnEdicion({
       id_ventas: venta.id_ventas,
       id_Cliente: venta.id_Cliente,
       Fe_Venta: venta.Fe_Venta ? venta.Fe_Venta.split("T")[0] : hoy,
     });
 
-    // Copia de detalles
     setDetallesNuevos(
       (venta.detalles || []).map((d) => ({
         id_DetalleVenta: d.id_DetalleVenta || d.id,
@@ -256,14 +239,14 @@ const Venta = () => {
         return;
       }
 
-      // 1) Actualizar cabecera
+      // Actualizar cabecera
       await fetch(`http://localhost:3001/api/actualizarVenta/${ventaAEditar.id_ventas}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(ventaEnEdicion),
       });
 
-      // 2) Eliminar detalles antiguos
+      // Eliminar detalles antiguos
       const respDetalles = await fetch("http://localhost:3001/api/detallesventas");
       const todos = await respDetalles.json();
       const actuales = todos.filter((d) => d.id_Venta === ventaAEditar.id_ventas);
@@ -274,7 +257,7 @@ const Venta = () => {
         });
       }
 
-      // 3) Agregar detalles nuevos
+      // Agregar detalles nuevos
       for (const d of detallesNuevos) {
         await fetch("http://localhost:3001/api/registrarDetalleVenta", {
           method: "POST",
@@ -302,7 +285,10 @@ const Venta = () => {
   // ======================= Eliminar Venta =======================
   const confirmarEliminacion = async () => {
     try {
-      await fetch(`http://localhost:3001/api/eliminarVenta/${ventaAEliminar.id_ventas}`, { method: "DELETE" });
+      await fetch(`http://localhost:3001/api/eliminarVenta/${ventaAEliminar.id_ventas}`, {
+        method: "DELETE",
+      });
+
       setVentas((prev) => prev.filter((v) => v.id_ventas !== ventaAEliminar.id_ventas));
       setVentasFiltradas((prev) => prev.filter((v) => v.id_ventas !== ventaAEliminar.id_ventas));
       setMostrarModalEliminar(false);
@@ -311,10 +297,6 @@ const Venta = () => {
       alert("No se pudo eliminar.");
     }
   };
-
-
-  
-
 
   // ======================= Ver detalles =======================
   const verDetalles = (id_ventas) => {
@@ -340,9 +322,7 @@ const Venta = () => {
     >
       <Container style={{ maxWidth: "1100px" }}>
         <Card className="p-4 rounded-4 shadow-lg">
-          <h2 className="text-center text-primary fw-bold mb-4">
-            Gestión de Ventas
-          </h2>
+          <h2 className="text-center text-primary fw-bold mb-4">Gestión de Ventas</h2>
 
           <Row className="mb-4 align-items-center">
             <Col md={7}>
@@ -351,6 +331,7 @@ const Venta = () => {
                 manejarCambioBusqueda={manejarCambioBusqueda}
               />
             </Col>
+
             <Col className="text-end">
               <Button
                 variant="success"
@@ -359,11 +340,7 @@ const Venta = () => {
               >
                 + Venta
               </Button>
-              <Button
-                variant="danger"
-                className="me-2"
-                onClick={generarPDFVentas}
-              >
+              <Button variant="danger" className="me-2" onClick={generarPDFVentas}>
                 PDF
               </Button>
               <Button variant="info" onClick={exportarExcelVentas}>
