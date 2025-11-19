@@ -6,6 +6,10 @@ import ModalRegistroProducto from "../components/Producto/ModalRegistroProducto"
 import ModalEdicionProducto from "../components/Producto/ModalEdicionProducto";
 import ModalEliminacionProducto from "../components/Producto/ModalEliminacionProducto";
 
+// PDF
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+
 // Excel
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -18,7 +22,6 @@ const Producto = () => {
   const [productosFiltrados, setProductosFiltrados] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [textoBusqueda, setTextoBusqueda] = useState("");
-  
 
   const [mostrarModal, setMostrarModal] = useState(false);
   const [nuevoProducto, setNuevoProducto] = useState({
@@ -36,12 +39,11 @@ const Producto = () => {
   const [mostrarModalEliminacion, setMostrarModalEliminacion] = useState(false);
   const [productoAEliminado, setProductoAEliminado] = useState(null);
 
-  const [minimizado, setMinimizado] = useState(false);
   const [animado, setAnimado] = useState(false);
 
-  // -----------------------------
-  // CRUD
-  // -----------------------------
+  // =========================
+  // OBTENER PRODUCTOS
+  // =========================
   const obtenerProductos = async () => {
     try {
       const respuesta = await fetch("http://localhost:3001/api/producto");
@@ -58,14 +60,15 @@ const Producto = () => {
 
   useEffect(() => {
     obtenerProductos();
-    // activar animación después de montar
     setTimeout(() => setAnimado(true), 50);
   }, []);
 
+  // =========================
+  // BUSCAR PRODUCTOS
+  // =========================
   const manejarCambioBusqueda = (e) => {
     const texto = e.target.value.toLowerCase();
     setTextoBusqueda(texto);
-
     const filtrados = productos.filter(
       (p) =>
         p.Nombre_Prod.toLowerCase().includes(texto) ||
@@ -74,6 +77,9 @@ const Producto = () => {
     setProductosFiltrados(filtrados);
   };
 
+  // =========================
+  // AGREGAR PRODUCTO
+  // =========================
   const manejarCambioInput = (e) => {
     const { name, value } = e.target;
     setNuevoProducto((prev) => ({ ...prev, [name]: value }));
@@ -105,6 +111,9 @@ const Producto = () => {
     }
   };
 
+  // =========================
+  // EDITAR PRODUCTO
+  // =========================
   const abrirModalEdicion = (producto) => {
     setProductoEditado({ ...producto });
     setMostrarModalEdicion(true);
@@ -130,6 +139,9 @@ const Producto = () => {
     }
   };
 
+  // =========================
+  // ELIMINAR PRODUCTO
+  // =========================
   const abrirModalEliminacion = (producto) => {
     setProductoAEliminado(producto);
     setMostrarModalEliminacion(true);
@@ -151,19 +163,30 @@ const Producto = () => {
     }
   };
 
-
+  // =========================
+  // REPORTE EXCEL
+  // =========================
   const generarReporteExcel = async () => {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Productos");
 
+    // Título centrado
+    sheet.mergeCells("A1:G1");
+    const titulo = sheet.getCell("A1");
+    titulo.value = "Reporte de Productos - Almacén Rural";
+    titulo.font = { size: 16, bold: true };
+    titulo.alignment = { horizontal: "center" };
+
+    sheet.addRow([]);
+
     sheet.columns = [
-      { header: "ID Producto", key: "id", width: 10 },
+      { header: "ID Producto", key: "id", width: 12 },
       { header: "Nombre", key: "nombre", width: 25 },
       { header: "Tipo", key: "tipo", width: 15 },
-      { header: "Existencia", key: "existencia", width: 10 },     
+      { header: "Existencia", key: "existencia", width: 12 },
       { header: "Precio Costo", key: "costo", width: 15 },
       { header: "Precio Venta", key: "venta", width: 15 },
-      { header: "Fecha Caducidad", key: "fecha", width: 20 },
+      { header: "Fecha Caducidad", key: "fecha", width: 18 },
     ];
 
     productosFiltrados.forEach((p) => {
@@ -171,7 +194,7 @@ const Producto = () => {
         id: p.id_Producto,
         nombre: p.Nombre_Prod,
         tipo: p.Tipo_Prod,
-        existencia: p.Existencia_Prod,      
+        existencia: p.Existencia_Prod,
         costo: p.Precio_Costo,
         venta: p.Precio_Venta,
         fecha: p.Fe_caducidad,
@@ -179,13 +202,49 @@ const Producto = () => {
     });
 
     const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: "application/octet-stream" });
-    saveAs(blob, "reporte_productos.xlsx");
+    saveAs(new Blob([buffer]), "reporte_productos.xlsx");
   };
 
-  // -----------------------------
-  // Render
-  // -----------------------------
+  // =========================
+  // REPORTE PDF
+  // =========================
+  const generarReportePDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("Reporte de Productos - Almacén Rural", 14, 15);
+
+    const columnas = [
+      "ID Producto",
+      "Nombre",
+      "Tipo",
+      "Existencia",
+      "Precio Costo",
+      "Precio Venta",
+      "Fecha Caducidad",
+    ];
+
+    const filas = productosFiltrados.map((p) => [
+      p.id_Producto,
+      p.Nombre_Prod,
+      p.Tipo_Prod,
+      p.Existencia_Prod,
+      p.Precio_Costo,
+      p.Precio_Venta,
+      p.Fe_caducidad,
+    ]);
+
+    doc.autoTable({
+      head: [columnas],
+      body: filas,
+      startY: 25,
+    });
+
+    doc.save("reporte_productos.pdf");
+  };
+
+  // =========================
+  // RENDER
+  // =========================
   return (
     <div
       style={{
@@ -208,13 +267,12 @@ const Producto = () => {
         className="d-flex justify-content-center align-items-center"
         style={{ minHeight: "100vh", padding: "70px" }}
       >
-
         <div
           className={`position-relative p-4 rounded-4 shadow-lg`}
           style={{
             backgroundColor: "rgba(255, 255, 255, 0.67)",
             maxWidth: "900px",
-            width: "145%",
+            width: "100%",
             border: "3px solid #28a745",
             borderRadius: "20px",
             backdropFilter: "blur(8px)",
@@ -245,7 +303,14 @@ const Producto = () => {
                 className="fw-bold px-4 shadow-sm text-white"
                 onClick={generarReporteExcel}
               >
-                📊 Reporte
+                📊 Excel
+              </Button>
+              <Button
+                variant="info"
+                className="fw-bold px-4 shadow-sm text-white"
+                onClick={generarReportePDF}
+              >
+                📝 PDF
               </Button>
             </Col>
           </Row>
@@ -283,7 +348,6 @@ const Producto = () => {
             confirmarEliminacion={confirmarEliminacion}
           />
         </div>
-
       </Container>
     </div>
   );
