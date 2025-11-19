@@ -8,19 +8,16 @@ const Paginacion = ({
   paginaActual,
   establecerPaginaActual,
 }) => {
-  // Calcular el total de páginas
   const totalPaginas = Math.ceil(totalElementos / elementosPorPagina);
 
-  // Cambiar la página actual
   const manejarCambioPagina = (pagina) => {
     if (pagina >= 1 && pagina <= totalPaginas) {
       establecerPaginaActual(pagina);
     }
   };
 
-  // Generar los ítems de paginación
   const itemsPaginacion = [];
-  const maxPaginasVisibles = 3; // Máximo de páginas visibles a la vez
+  const maxPaginasVisibles = 3; 
 
   let paginaInicio = Math.max(1, paginaActual - Math.floor(maxPaginasVisibles / 2));
   let paginaFin = Math.min(totalPaginas, paginaInicio + maxPaginasVisibles - 1);

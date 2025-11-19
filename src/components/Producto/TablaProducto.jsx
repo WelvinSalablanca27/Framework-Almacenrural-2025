@@ -16,7 +16,7 @@ const TablaProducto = ({
 
   const isMobile = useMediaQuery({ maxWidth: 767 });
 
-  // ORDENAMIENTO
+
   const manejarOrden = (campo) => {
     setOrden((prev) => ({
       campo,
@@ -36,7 +36,6 @@ const TablaProducto = ({
       : String(B).localeCompare(String(A));
   });
 
-  // PAGINACIÓN
   const totalElementos = productosOrdenados.length;
   const inicio = (paginaActual - 1) * elementosPorPagina;
   const productosPaginados = productosOrdenados.slice(inicio, inicio + elementosPorPagina);
@@ -82,7 +81,6 @@ const TablaProducto = ({
             <option value="Nombre_Prod-asc">Nombre (A → Z)</option>
             <option value="Nombre_Prod-desc">Nombre (Z → A)</option>
             <option value="Existencia_Prod-desc">Existencia (más stock)</option>
-            <option value="stock-desc">Stock (más)</option>
             <option value="Precio_Venta-desc">Precio Venta (más caro)</option>
             <option value="Fe_caducidad-asc">Caducidad (próxima)</option>
           </select>
@@ -125,11 +123,7 @@ const TablaProducto = ({
                   </div>
                   <div className="d-flex justify-content-between mb-1">
                     <span className="text-muted">Existencia:</span>
-                    <span className="fw-bold text-primary">{p.Existencia_Prod}</span>
-                  </div>
-                  <div className="d-flex justify-content-between mb-1">
-                    <span className="text-muted">Stock:</span>
-                    <span className="fw-bold text-primary">{p.stock}</span>
+                    <span className="fw-bold text">{p.Existencia_Prod}</span>
                   </div>
                   <div className="d-flex justify-content-between mb-1">
                     <span className="text-muted">Costo:</span>
@@ -177,7 +171,6 @@ const TablaProducto = ({
               <BotonOrden campo="Nombre_Prod" orden={orden} manejarOrden={manejarOrden}>Nombre</BotonOrden>
               <BotonOrden campo="Tipo_Prod" orden={orden} manejarOrden={manejarOrden}>Tipo</BotonOrden>
               <BotonOrden campo="Existencia_Prod" orden={orden} manejarOrden={manejarOrden}>Existencia</BotonOrden>
-              <BotonOrden campo="stock" orden={orden} manejarOrden={manejarOrden}>Stock</BotonOrden>
               <BotonOrden campo="Precio_Costo" orden={orden} manejarOrden={manejarOrden}>Precio Costo</BotonOrden>
               <BotonOrden campo="Precio_Venta" orden={orden} manejarOrden={manejarOrden}>Precio Venta</BotonOrden>
               <BotonOrden campo="Fe_caducidad" orden={orden} manejarOrden={manejarOrden}>Caducidad</BotonOrden>
@@ -191,7 +184,6 @@ const TablaProducto = ({
                 <td>{p.Nombre_Prod}</td>
                 <td>{p.Tipo_Prod}</td>
                 <td>{p.Existencia_Prod}</td>
-                <td>{p.stock}</td>
                 <td>{formatearMoneda(p.Precio_Costo)}</td>
                 <td>{formatearMoneda(p.Precio_Venta)}</td>
                 <td>{formatearFecha(p.Fe_caducidad)}</td>

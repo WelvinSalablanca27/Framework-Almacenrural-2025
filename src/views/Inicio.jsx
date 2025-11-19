@@ -1,16 +1,9 @@
 import React from "react";
 import { Container, Row, Col, Card } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom";
-import {
-  FaUsers,
-  FaUserCog,
-  FaBoxOpen,
-  FaTruck,
-  FaCashRegister,
-  FaShoppingCart
-} from "react-icons/fa";
+import { Link } from "react-router-dom";
+import { FaUsers, FaUserCog, FaBoxOpen, FaTruck, FaCashRegister, FaShoppingCart } from "react-icons/fa";
 
-// 🎨 COLORES FINALES POR ENTIDAD
+
 const secciones = [
   { nombre: "Cliente", colorCajero: "#38bdf8", colorAdmin: "#38bdf8", icono: FaUsers, ruta: "/cliente", descripcion: "Gestionar información de clientes." },
   { nombre: "Usuario", colorCajero: "#2563eb", colorAdmin: "#2563eb", icono: FaUserCog, ruta: "/usuarios", descripcion: "Administrar cuentas de usuario." },
@@ -20,34 +13,20 @@ const secciones = [
   { nombre: "Compra", colorCajero: "#1e3a8a", colorAdmin: "#1e3a8a", icono: FaShoppingCart, ruta: "/compra", descripcion: "Registrar compras y administrar inventario." },
 ];
 
+// Fondo global
 const fondoalmacenrural = "https://i.pinimg.com/736x/76/fb/4a/76fb4a687980c6b31824bc0752d66f10.jpg";
 
-const Inicio = ({ setUsuarioLogueado }) => {
-  const navigate = useNavigate();
-
-  const cerrarSesion = () => {
-    if (window.confirm("¿Desea cerrar sesión?")) {
-      setUsuarioLogueado(null);
-      localStorage.removeItem("usuarioLogueado");
-      navigate("/login");
-    }
-  };
-
+const Inicio = () => {
   const rol = JSON.parse(localStorage.getItem("usuarioLogueado"))?.rol || "cajero";
 
-  const seccionesFiltradas = secciones.filter((sec) => {
-    if (rol === "cajero") {
-      return ["Cliente", "Producto", "Venta"].includes(sec.nombre);
-    }
-    return true;
-  });
+  const seccionesFiltradas = secciones.filter((sec) =>
+    rol === "cajero" ? ["Cliente", "Producto", "Venta"].includes(sec.nombre) : true
+  );
 
   const mensajeBienvenida =
     rol === "cajero"
       ? "¡Bienvenido, Cajero! Gestione clientes, productos y ventas."
       : "¡Bienvenido, Administrador! Controle todas las áreas del sistema.";
-
-  const colorBienvenida = rol === "cajero" ? "#2563eb" : "#2563eb";
 
   return (
     <div
@@ -57,15 +36,16 @@ const Inicio = ({ setUsuarioLogueado }) => {
         backgroundImage: `url(${fondoalmacenrural})`,
         backgroundSize: "cover",
         backgroundPosition: "center",
+        position: "fixed",
+        top: 0,
+        left: 0,
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
         overflow: "auto",
-        position: "fixed",
-        top: 0,
-        left: 0,
       }}
     >
+      {/* Overlay sutil */}
       <div
         style={{
           position: "absolute",
@@ -73,26 +53,26 @@ const Inicio = ({ setUsuarioLogueado }) => {
           left: 0,
           width: "100%",
           height: "100%",
-          backgroundColor: "rgba(0,0,0,0.32)",
-          backdropFilter: "blur(4px)",
+          backgroundColor: "rgba(0,0,0,0.05)",
           zIndex: 0,
         }}
-      ></div>
+      />
 
       <Container
         style={{
           position: "relative",
           zIndex: 1,
+          padding: "20px",
+          maxWidth: "1200px",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          padding: "20px",
-          maxWidth: "1200px",
         }}
       >
+        {/* Tarjeta de bienvenida con color nice */}
         <Card
           style={{
-            background: colorBienvenida,
+            background: "linear-gradient(135deg, #4ade80, #06b6d4)", 
             color: "white",
             borderRadius: "15px",
             padding: "18px",
@@ -106,64 +86,46 @@ const Inicio = ({ setUsuarioLogueado }) => {
           <h5 className="fw-bold">{mensajeBienvenida}</h5>
         </Card>
 
+        {/* Tarjetas de secciones */}
         <Row className="g-3 justify-content-center" style={{ width: "100%" }}>
           {seccionesFiltradas.map((sec, idx) => {
             const Icon = sec.icono;
             const colorTarjeta = rol === "cajero" ? sec.colorCajero : sec.colorAdmin;
 
             return (
-              <Col
-                key={idx}
-                xs={6}
-                sm={4}
-                md={3}
-                lg={3}
-                className="d-flex justify-content-center"
-              >
+              <Col key={idx} xs={6} sm={4} md={3} lg={3} className="d-flex justify-content-center">
                 <Link to={sec.ruta} style={{ textDecoration: "none", width: "100%" }}>
                   <Card
-                    className="text-center shadow"
                     style={{
                       borderRadius: "16px",
                       width: "100%",
-                      height: "160px", // 🔥 TODAS LAS TARJETAS MISMO TAMAÑO
+                      height: "160px",
                       padding: "15px",
                       background: colorTarjeta,
                       color: "white",
                       border: "none",
                       cursor: "pointer",
-                      transition: "all 0.23s ease",
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
                       justifyContent: "center",
                       boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                      transition: "all 0.23s ease",
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.transform =
-                        "translateY(-5px) scale(1.05)";
-                      e.currentTarget.style.boxShadow =
-                        "0 12px 22px rgba(0,0,0,0.30)";
+                      e.currentTarget.style.transform = "translateY(-5px) scale(1.05)";
+                      e.currentTarget.style.boxShadow = "0 12px 22px rgba(0,0,0,0.30)";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.transform =
-                        "translateY(0) scale(1)";
-                      e.currentTarget.style.boxShadow =
-                        "0 4px 12px rgba(0,0,0,0.15)";
+                      e.currentTarget.style.transform = "translateY(0) scale(1)";
+                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.15)";
                     }}
                   >
-                    <Icon size={40} color="white" className="mb-2" />
+                    <Icon size={40} className="mb-2" />
                     <span className="fw-bold" style={{ fontSize: "1rem" }}>
                       {sec.nombre}
                     </span>
-                    <p
-                      style={{
-                        fontSize: "0.75rem",
-                        color: "white",
-                        marginTop: "6px",
-                        opacity: 0.9,
-                      }}
-                    >
+                    <p style={{ fontSize: "0.75rem", marginTop: "6px", opacity: 0.9 }}>
                       {sec.descripcion}
                     </p>
                   </Card>
@@ -176,4 +138,5 @@ const Inicio = ({ setUsuarioLogueado }) => {
     </div>
   );
 };
+
 export default Inicio;

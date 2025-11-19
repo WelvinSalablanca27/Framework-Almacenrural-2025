@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
-import { Container, Row, Col, Button, Card } from "react-bootstrap";
-
-import TablaVentas from "../components/Venta/TablaVenta";
+import { Container, Row, Col, Button } from "react-bootstrap";
 import CuadroBusquedas from "../components/busquedas/CuadroBusquedas";
-
-import ModalRegistroVenta from "../components/Venta/ModalRegistrarVenta";
+import TablaVentas from "../components/Venta/TablaVenta";
+import ModalRegistroVenta from "../components/Venta/ModalRegistroVenta";
 import ModalEdicionVenta from "../components/Venta/ModalEdicionVenta";
 import ModalEliminacionVenta from "../components/Venta/ModalEliminacionVenta";
-import ModalDetallesVenta from "../components/detalle_venta/ModalDetallesVenta";
+import ModalDetallesVenta from "../components/DetallesVenta/detalle_venta";
 
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -21,9 +19,12 @@ const Venta = () => {
   const [ventas, setVentas] = useState([]);
   const [ventasFiltradas, setVentasFiltradas] = useState([]);
   const [cargando, setCargando] = useState(true);
-
   const [clientes, setClientes] = useState([]);
   const [productos, setProductos] = useState([]);
+
+  const [textoBusqueda, setTextoBusqueda] = useState("");
+  const [paginaActual, setPaginaActual] = useState(1);
+  const elementosPorPagina = 5;
 
   const [mostrarModalRegistro, setMostrarModalRegistro] = useState(false);
   const [mostrarModalEdicion, setMostrarModalEdicion] = useState(false);
@@ -32,23 +33,12 @@ const Venta = () => {
 
   const [ventaAEditar, setVentaAEditar] = useState(null);
   const [ventaAEliminar, setVentaAEliminar] = useState(null);
-  const [detallesVenta, setDetallesVenta] = useState([]);
-
   const [ventaEnEdicion, setVentaEnEdicion] = useState(null);
   const [detallesNuevos, setDetallesNuevos] = useState([]);
-
-  const [textoBusqueda, setTextoBusqueda] = useState("");
-  const [paginaActual, setPaginaActual] = useState(1);
-  const elementosPorPagina = 5;
+  const [detallesVenta, setDetallesVenta] = useState([]);
 
   const hoy = new Date().toISOString().split("T")[0];
 
-  const [nuevaVenta, setNuevaVenta] = useState({
-    id_Cliente: "",
-    Fe_Venta: hoy,
-  });
-
-  // ======================= Cargar datos =======================
   useEffect(() => {
     obtenerDatos();
   }, []);
@@ -56,9 +46,8 @@ const Venta = () => {
   const obtenerDatos = async () => {
     try {
       setCargando(true);
-
       const [resVentas, resClientes, resProductos, resDetalles] = await Promise.all([
-        fetch("http://localhost:3001/api/ventas"),
+        fetch("http://localhost:3001/api/Venta"),
         fetch("http://localhost:3001/api/clientes"),
         fetch("http://localhost:3001/api/producto"),
         fetch("http://localhost:3001/api/detallesventas"),
@@ -105,12 +94,11 @@ const Venta = () => {
       setCargando(false);
     } catch (error) {
       console.error(error);
-      alert("Error al cargar datos.");
       setCargando(false);
     }
   };
 
-  // ======================= Búsqueda =======================
+  // Buscador
   const manejarCambioBusqueda = (e) => {
     const texto = e.target.value.toLowerCase();
     setTextoBusqueda(texto);
@@ -126,7 +114,12 @@ const Venta = () => {
     setPaginaActual(1);
   };
 
-  // ======================= PDF =======================
+  const ventasPaginadas = ventasFiltradas.slice(
+    (paginaActual - 1) * elementosPorPagina,
+    paginaActual * elementosPorPagina
+  );
+
+  // PDF
   const generarPDFVentas = () => {
     const doc = new jsPDF();
     doc.text("REPORTE DE VENTAS", 105, 20, { align: "center" });
@@ -149,7 +142,7 @@ const Venta = () => {
     doc.save(`Ventas_${hoy}.pdf`);
   };
 
-  // ======================= Excel =======================
+  // Excel
   const exportarExcelVentas = () => {
     const datos = [];
     ventas.forEach((v) => {
@@ -178,228 +171,119 @@ const Venta = () => {
     const ws = XLSX.utils.json_to_sheet(datos);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Ventas");
-
     const excel = XLSX.write(wb, { type: "array", bookType: "xlsx" });
     saveAs(new Blob([excel]), `Ventas_${hoy}.xlsx`);
   };
 
-  // ======================= Agregar Venta =======================
-  const agregarVenta = async () => {
-    if (!nuevaVenta.id_Cliente || detallesNuevos.length === 0) {
-      alert("Completa cliente y agrega al menos un producto.");
-      return;
-    }
-
-    try {
-      const ventaResp = await fetch("http://localhost:3001/api/registrarVenta", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(nuevaVenta),
-      });
-      if (!ventaResp.ok) throw new Error("Error al crear venta");
-
-      const created = await ventaResp.json();
-      const id_ventas = created.id_ventas || created.insertId || created.id;
-
-      for (const d of detallesNuevos) {
-        await fetch("http://localhost:3001/api/registrarDetalleVenta", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id_Venta: id_ventas,
-            id_Producto: d.id_Producto,
-            Precio_venta: d.Precio_venta,
-            Cantidad_Producto: d.Cantidad_Producto,
-          }),
-        });
-      }
-
-      await obtenerDatos();
-      setMostrarModalRegistro(false);
-      setNuevaVenta({ id_Cliente: "", Fe_Venta: hoy });
-      setDetallesNuevos([]);
-    } catch (error) {
-      console.error(error);
-      alert("Error al registrar venta.");
-    }
-  };
-
-  // ======================= Editar Venta =======================
-  const abrirModalEdicion = (venta) => {
-    setVentaAEditar(venta);
-
-    // Datos del formulario
-    setVentaEnEdicion({
-      id_ventas: venta.id_ventas,
-      id_Cliente: venta.id_Cliente,
-      Fe_Venta: venta.Fe_Venta ? venta.Fe_Venta.split("T")[0] : hoy,
-    });
-
-    // Copia de detalles
-    setDetallesNuevos(
-      (venta.detalles || []).map((d) => ({
-        id_DetalleVenta: d.id_DetalleVenta || d.id,
-        id_Producto: d.id_Producto,
-        nombre_producto: d.nombre_producto,
-        Cantidad_Producto: d.Cantidad_Producto,
-        Precio_venta: d.Precio_venta,
-      }))
-    );
-
-    setMostrarModalEdicion(true);
-  };
-
-  const actualizarVenta = async () => {
-    try {
-      if (!ventaEnEdicion.id_Cliente || detallesNuevos.length === 0) {
-        alert("Completa cliente y agrega al menos un producto.");
-        return;
-      }
-
-      // 1) Actualizar cabecera
-      await fetch(`http://localhost:3001/api/actualizarVenta/${ventaAEditar.id_ventas}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(ventaEnEdicion),
-      });
-
-      // 2) Eliminar detalles antiguos
-      const respDetalles = await fetch("http://localhost:3001/api/detallesventas");
-      const todos = await respDetalles.json();
-      const actuales = todos.filter((d) => d.id_Venta === ventaAEditar.id_ventas);
-
-      for (const d of actuales) {
-        await fetch(`http://localhost:3001/api/eliminarDetalleVenta/${d.id_DetalleVenta || d.id}`, {
-          method: "DELETE",
-        });
-      }
-
-      // 3) Agregar detalles nuevos
-      for (const d of detallesNuevos) {
-        await fetch("http://localhost:3001/api/registrarDetalleVenta", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id_Venta: ventaAEditar.id_ventas,
-            id_Producto: d.id_Producto,
-            Cantidad_Producto: d.Cantidad_Producto,
-            Precio_venta: d.Precio_venta,
-          }),
-        });
-      }
-
-      await obtenerDatos();
-      setMostrarModalEdicion(false);
-      setVentaAEditar(null);
-      setVentaEnEdicion(null);
-      setDetallesNuevos([]);
-    } catch (error) {
-      console.error(error);
-      alert("Error al actualizar venta.");
-    }
-  };
-
-  // ======================= Eliminar Venta =======================
-  const confirmarEliminacion = async () => {
-    try {
-      await fetch(`http://localhost:3001/api/eliminarVenta/${ventaAEliminar.id_ventas}`, { method: "DELETE" });
-      setVentas((prev) => prev.filter((v) => v.id_ventas !== ventaAEliminar.id_ventas));
-      setVentasFiltradas((prev) => prev.filter((v) => v.id_ventas !== ventaAEliminar.id_ventas));
-      setMostrarModalEliminar(false);
-    } catch (error) {
-      console.error(error);
-      alert("No se pudo eliminar.");
-    }
-  };
-
-
-  
-
-
-  // ======================= Ver detalles =======================
-  const verDetalles = (id_ventas) => {
-    const venta = ventas.find((v) => v.id_ventas === id_ventas);
-    setDetallesVenta(venta ? venta.detalles : []);
-    setMostrarModalDetalles(true);
-  };
-
-  const ventasPaginadas = ventasFiltradas.slice(
-    (paginaActual - 1) * elementosPorPagina,
-    paginaActual * elementosPorPagina
-  );
-
+  // Render
   return (
     <div
       style={{
         backgroundImage: `url(${fondoalmacenrural})`,
         backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
         backgroundAttachment: "fixed",
         minHeight: "100vh",
-        paddingTop: "40px",
+        width: "100vw",
+        padding: 0,
+        margin: 0,
+        position: "fixed",
+        top: 0,
+        left: 0,
+        overflow: "auto",
       }}
     >
-      <Container style={{ maxWidth: "1100px" }}>
-        <Card className="p-4 rounded-4 shadow-lg">
-          <h2 className="text-center text-primary fw-bold mb-4">
-            Gestión de Ventas
-          </h2>
+      <Container
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "100vh", padding: "70px" }}
+      >
+        <div
+          className="position-relative p-4 rounded-4 shadow-lg"
+          style={{
+            backgroundColor: "rgba(255,255,255,0.75)",
+            maxWidth: "1200px",
+            width: "100%",
+            border: "3px solid #198754",
+            borderRadius: "20px",
+            backdropFilter: "blur(8px)",
+          }}
+        >
+          <h4 className="text-center mb-4 fw-bold text-success">Gestión de Ventas</h4>
 
-          <Row className="mb-4 align-items-center">
-            <Col md={7}>
+          {/* Buscador y botones */}
+          <Row className="mb-3 align-items-center mt-3">
+            <Col lg={7} md={8} sm={12} className="mb-2 mb-md-0">
               <CuadroBusquedas
                 textoBusqueda={textoBusqueda}
                 manejarCambioBusqueda={manejarCambioBusqueda}
               />
             </Col>
-            <Col className="text-end">
+            <Col className="text-end d-flex justify-content-end flex-wrap gap-2">
               <Button
                 variant="success"
-                className="me-2"
+                className="fw-bold px-4 shadow-sm"
                 onClick={() => setMostrarModalRegistro(true)}
               >
                 + Venta
               </Button>
               <Button
-                variant="danger"
-                className="me-2"
+                variant="primary"
+                className="fw-bold px-4 shadow-sm"
                 onClick={generarPDFVentas}
               >
                 PDF
               </Button>
-              <Button variant="info" onClick={exportarExcelVentas}>
+              <Button
+                variant="success"
+                className="fw-bold px-4 shadow-sm"
+                onClick={exportarExcelVentas}
+              >
                 Excel
               </Button>
             </Col>
           </Row>
 
-          <TablaVentas
-            ventas={ventasPaginadas}
-            cargando={cargando}
-            obtenerDetalles={verDetalles}
-            abrirModalEdicion={abrirModalEdicion}
-            abrirModalEliminacion={(v) => {
-              setVentaAEliminar(v);
-              setMostrarModalEliminar(true);
-            }}
-            totalElementos={ventasFiltradas.length}
-            elementosPorPagina={elementosPorPagina}
-            paginaActual={paginaActual}
-            establecerPaginaActual={setPaginaActual}
-          />
+          {/* Tabla con scroll */}
+          <div style={{ maxHeight: "60vh", overflowY: "auto", paddingRight: "8px" }}>
+            <TablaVentas
+              ventas={ventasPaginadas}
+              cargando={cargando}
+              obtenerDetalles={(id) => {
+                const venta = ventas.find((v) => v.id_ventas === id);
+                setDetallesVenta(venta ? venta.detalles : []);
+                setMostrarModalDetalles(true);
+              }}
+              abrirModalEdicion={(v) => {
+                setVentaAEditar(v);
+                setVentaEnEdicion({
+                  id_ventas: v.id_ventas,
+                  id_Cliente: v.id_Cliente,
+                  Fe_Venta: v.Fe_Venta ? v.Fe_Venta.split("T")[0] : hoy,
+                });
+                setDetallesNuevos(v.detalles || []);
+                setMostrarModalEdicion(true);
+              }}
+              abrirModalEliminacion={(v) => {
+                setVentaAEliminar(v);
+                setMostrarModalEliminar(true);
+              }}
+              totalElementos={ventasFiltradas.length}
+              elementosPorPagina={elementosPorPagina}
+              paginaActual={paginaActual}
+              establecerPaginaActual={setPaginaActual}
+            />
+          </div>
 
+          {/* Modales */}
           <ModalRegistroVenta
             mostrar={mostrarModalRegistro}
             setMostrar={setMostrarModalRegistro}
-            nuevaVenta={nuevaVenta}
-            setNuevaVenta={setNuevaVenta}
-            detalles={detallesNuevos}
-            setDetalles={setDetallesNuevos}
             clientes={clientes}
             productos={productos}
-            onGuardarVenta={agregarVenta}
+            onGuardarVenta={() => {}}
             hoy={hoy}
           />
-
           <ModalEdicionVenta
             mostrar={mostrarModalEdicion}
             setMostrar={setMostrarModalEdicion}
@@ -410,22 +294,20 @@ const Venta = () => {
             setDetalles={setDetallesNuevos}
             clientes={clientes}
             productos={productos}
-            actualizarVenta={actualizarVenta}
+            actualizarVenta={() => {}}
           />
-
           <ModalEliminacionVenta
             mostrar={mostrarModalEliminar}
             setMostrar={setMostrarModalEliminar}
             venta={ventaAEliminar}
-            confirmarEliminacion={confirmarEliminacion}
+            confirmarEliminacion={() => {}}
           />
-
           <ModalDetallesVenta
             mostrarModal={mostrarModalDetalles}
             setMostrarModal={setMostrarModalDetalles}
             detalles={detallesVenta}
           />
-        </Card>
+        </div>
       </Container>
     </div>
   );

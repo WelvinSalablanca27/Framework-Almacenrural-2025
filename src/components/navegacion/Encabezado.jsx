@@ -11,10 +11,8 @@ const Encabezado = ({ usuarioLogueado, manejarLogout }) => {
   const navegar = (ruta) => { navigate(ruta); setShow(false); };
   const activo = (ruta) => location.pathname === ruta;
 
-  // Si no hay usuario logueado o estamos en login, no mostramos nada
   if (!usuarioLogueado || location.pathname === "/login") return null;
 
-  // Menú completo
   const menuItems = [
     { ruta: "/", icono: "bi-house-door-fill", nombre: "Inicio" },
     { ruta: "/usuarios", icono: "bi-people-fill", nombre: "Usuarios" },
@@ -25,7 +23,6 @@ const Encabezado = ({ usuarioLogueado, manejarLogout }) => {
     { ruta: "/compra", icono: "bi-cart-fill", nombre: "Compra" },
   ];
 
-  // Filtrar menú según rol
   let menuFiltrado = menuItems;
   if (usuarioLogueado?.rol === "cajero") {
     menuFiltrado = menuItems.filter(
@@ -33,7 +30,6 @@ const Encabezado = ({ usuarioLogueado, manejarLogout }) => {
     );
   }
 
-  // Mostrar flecha solo si NO estamos en el inicio
   const mostrarFlecha = location.pathname !== "/";
 
   return (
