@@ -6,7 +6,7 @@ const ModalDetallesVenta = ({ mostrarModal, setMostrarModal, detalles }) => {
 
   // Cálculo del total
   const total = detallesSeguros.reduce(
-    (acc, d) => acc + (d.Cantidad_Producto ?? 0) * (d.Precio_venta ?? 0),
+    (acc, d) => acc + (d.Cantidad_Producto || 0) * (d.Precio_venta || 0),
     0
   );
 
@@ -15,8 +15,9 @@ const ModalDetallesVenta = ({ mostrarModal, setMostrarModal, detalles }) => {
       <Modal.Header closeButton>
         <Modal.Title>Detalles de la Venta</Modal.Title>
       </Modal.Header>
+
       <Modal.Body>
-        <Table striped bordered hover>
+        <Table striped bordered hover responsive>
           <thead>
             <tr>
               <th>Producto</th>
@@ -33,14 +34,15 @@ const ModalDetallesVenta = ({ mostrarModal, setMostrarModal, detalles }) => {
             ) : (
               detallesSeguros.map((d) => (
                 <tr key={d.id_DetalleVenta}>
-                  <td>{d.nombre_producto}</td>
-                  <td>{d.Cantidad_Producto}</td>
-                  <td>C$ {parseFloat(d.Precio_venta).toFixed(2)}</td>
-                  <td>C$ {(d.Cantidad_Producto * d.Precio_venta).toFixed(2)}</td>
+                  <td>{d.nombre_producto || 'N/A'}</td>
+                  <td>{d.Cantidad_Producto || 0}</td>
+                  <td>C$ {parseFloat(d.Precio_venta || 0).toFixed(2)}</td>
+                  <td>C$ {((d.Cantidad_Producto || 0) * (d.Precio_venta || 0)).toFixed(2)}</td>
                 </tr>
               ))
             )}
           </tbody>
+
           {detallesSeguros.length > 0 && (
             <tfoot>
               <tr>
@@ -51,6 +53,7 @@ const ModalDetallesVenta = ({ mostrarModal, setMostrarModal, detalles }) => {
           )}
         </Table>
       </Modal.Body>
+
       <Modal.Footer>
         <Button variant="secondary" onClick={() => setMostrarModal(false)}>
           Cerrar

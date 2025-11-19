@@ -100,17 +100,6 @@ const ModalRegistroProducto = ({
               />
             </div>
 
-            <div className="col-md-6 mb-3">
-              <Form.Label>Stock</Form.Label>
-              <Form.Control
-                type="number"
-                name="stock"
-                value={nuevoProducto.stock}
-                onChange={handleChange}
-                placeholder="0"
-                min="0"
-              />
-            </div>
           </div>
 
           <div className="row">

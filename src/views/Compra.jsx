@@ -35,7 +35,7 @@ const Compras = () => {
   const [productos, setProductos] = useState([]);
 
   const [paginaActual, setPaginaActual] = useState(1);
-  const elementosPorPagina = 5;
+  const elementosPorPagina = 3;
   const hoy = new Date().toISOString().split('T')[0];
 
   const [nuevaCompra, setNuevaCompra] = useState({

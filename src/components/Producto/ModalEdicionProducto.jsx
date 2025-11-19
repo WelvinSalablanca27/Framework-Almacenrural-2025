@@ -87,17 +87,6 @@ const ModalEdicionProducto = ({
               />
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Stock</Form.Label>
-              <Form.Control
-                type="number"
-                name="stock"
-                value={productoEditado.stock }
-                onChange={manejarCambio}
-                min="0"
-                step="1"
-              />
-            </Form.Group>
 
             <Form.Group className="mb-3">
               <Form.Label>Precio Costo</Form.Label>
