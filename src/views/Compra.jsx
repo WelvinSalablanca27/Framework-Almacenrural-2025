@@ -12,7 +12,6 @@ import "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
-// FONDO IGUAL QUE PRODUCTO
 const fondoalmacenrural =
   "https://i.pinimg.com/736x/76/fb/4a/76fb4a687980c6b31824bc0752d66f10.jpg";
 
@@ -46,8 +45,6 @@ const Compras = () => {
   const [compraEnEdicion, setCompraEnEdicion] = useState(null);
   const [detallesNuevos, setDetallesNuevos] = useState([]);
 
-  const [minimizado, setMinimizado] = useState(false); // NUEVO
-
   const comprasPaginadas = comprasFiltradas.slice(
     (paginaActual - 1) * elementosPorPagina,
     paginaActual * elementosPorPagina
@@ -69,7 +66,6 @@ const Compras = () => {
     return `${yyyy}-${mm}-${dd} ${hours}:${minutes} ${ampm}`;
   };
 
-  
   const generarPDFCompras = () => {
     const doc = new jsPDF();
 
@@ -80,12 +76,9 @@ const Compras = () => {
     doc.setFont(undefined, 'bold');
     doc.text("Reporte de Compras", doc.internal.pageSize.width / 2, 25, { align: "center" });
 
-
     const head = [["ID", "Proveedor", "Fecha Compra", "Total Productos", "Monto Total"]];
 
-    
     const data = compras.map(c => {
-
       const totalProductos = c.detalles ? c.detalles.reduce((sum, d) => sum + d.Cantidad, 0) : 0;
       const montoTotal = c.detalles ? c.detalles.reduce((sum, d) => sum + (d.Cantidad * d.Precio), 0) : 0;
       return [
@@ -464,7 +457,6 @@ const Compras = () => {
     obtenerProductos();
   }, []);
 
-  // ===================== RENDER =====================
   return (
     <div
       style={{
@@ -496,23 +488,9 @@ const Compras = () => {
             border: "3px solid #28a745",
             borderRadius: "20px",
             backdropFilter: "blur(8px)",
-            transition: "all 0.4s ease",
-            transform: minimizado ? "scale(0)" : "scale(1)",
-            opacity: minimizado ? 0 : 1,
-            pointerEvents: minimizado ? "none" : "all",
+            transition: "all 0.4s ease"
           }}
         >
-          {/* BOTÓN X PARA MINIMIZAR */}
-          <Button
-            variant="danger"
-            size="sm"
-            className="position-absolute top-0 end-0 m-2 fw-bold"
-            style={{ zIndex: 10, borderRadius: "50%", width: "36px", height: "36px" }}
-            onClick={() => setMinimizado(true)}
-          >
-            X
-          </Button>
-
           <h4 className="text-center mb-4 fw-bold text-success">Compras</h4>
 
           <Row className="mb-3 align-items-center">
@@ -602,24 +580,6 @@ const Compras = () => {
             detalles={detallesCompra}
           />
         </div>
-
-        {/* BOTÓN FLOTANTE PARA RESTAURAR */}
-        {minimizado && (
-          <Button
-            variant="success"
-            className="position-fixed bottom-0 end-0 m-4 shadow-lg"
-            style={{
-              zIndex: 1000,
-              borderRadius: "50%",
-              width: "60px",
-              height: "60px",
-              fontSize: "24px",
-            }}
-            onClick={() => setMinimizado(false)}
-          >
-            +
-          </Button>
-        )}
       </Container>
     </div>
   );

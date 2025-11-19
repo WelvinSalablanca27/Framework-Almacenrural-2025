@@ -41,9 +41,6 @@ const Cliente = () => {
 
     const [clientesSeleccionados, setClientesSeleccionados] = useState([]);
 
-    // -------------------------------
-    // Fetch clientes
-    // -------------------------------
     const obtenerClientes = async () => {
         try {
             const respuesta = await fetch("http://localhost:3001/api/clientes");
@@ -63,9 +60,7 @@ const Cliente = () => {
         obtenerClientes();
     }, []);
 
-    // -------------------------------
-    // Buscador
-    // -------------------------------
+    
     const manejarCambioBusqueda = (e) => {
         const texto = e.target.value.toLowerCase();
         setTextoBusqueda(texto);
@@ -80,9 +75,7 @@ const Cliente = () => {
         setClientesFiltrados(filtrados);
     };
 
-    // -------------------------------
-    // CRUD
-    // -------------------------------
+   
     const manejarCambioInput = (e) => {
         const { name, value } = e.target;
         setNuevoCliente((prev) => ({ ...prev, [name]: value }));
@@ -162,9 +155,7 @@ const Cliente = () => {
         }
     };
 
-    // -------------------------------
-    // Selección de clientes
-    // -------------------------------
+   
     const toggleSeleccion = (id) => {
         setClientesSeleccionados((prev) =>
             prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
@@ -176,9 +167,7 @@ const Cliente = () => {
         paginaActual * elementosPorPagina
     );
 
-    // -------------------------------
-    // Export PDF / Excel
-    // -------------------------------
+  
     const generarPDFClientes = () => {
         // mismo código que tenías
     };
@@ -186,10 +175,6 @@ const Cliente = () => {
     const exportarExcelClientes = () => {
         // mismo código que tenías
     };
-
-    // -------------------------------
-    // Render
-    // -------------------------------
     return (
         <div
             style={{

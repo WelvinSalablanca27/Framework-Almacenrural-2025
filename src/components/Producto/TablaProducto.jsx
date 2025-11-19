@@ -16,7 +16,7 @@ const TablaProducto = ({
 
   const isMobile = useMediaQuery({ maxWidth: 767 });
 
-  // ORDENAMIENTO
+
   const manejarOrden = (campo) => {
     setOrden((prev) => ({
       campo,
@@ -36,7 +36,6 @@ const TablaProducto = ({
       : String(B).localeCompare(String(A));
   });
 
-  // PAGINACIÓN
   const totalElementos = productosOrdenados.length;
   const inicio = (paginaActual - 1) * elementosPorPagina;
   const productosPaginados = productosOrdenados.slice(inicio, inicio + elementosPorPagina);

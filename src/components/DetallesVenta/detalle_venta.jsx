@@ -1,14 +1,23 @@
 import { Modal, Table, Button } from 'react-bootstrap';
 
 const ModalDetallesVenta = ({ mostrarModal, setMostrarModal, detalles }) => {
-  // Aseguramos que detalles sea un array
   const detallesSeguros = Array.isArray(detalles) ? detalles : [];
 
-  // Cálculo del total
-  const total = detallesSeguros.reduce(
-    (acc, d) => acc + (d.Cantidad_Producto || 0) * (d.Precio_venta || 0),
-    0
-  );
+  // Agrupamos por el nombre que sí tenemos guardado
+  const productos = detallesSeguros.reduce((acc, d) => {
+    const nombre = d.nombre_producto_guardado?.trim() || 
+                   d.nombre_producto?.trim() || 
+                   'Producto sin nombre';
+
+    if (!acc[nombre]) {
+      acc[nombre] = { nombre, cantidad: 0, precio: d.Precio_venta || 0 };
+    }
+    acc[nombre].cantidad += d.Cantidad_Producto || 0;
+    return acc;
+  }, {});
+
+  const filas = Object.values(productos);
+  const total = filas.reduce((sum, p) => sum + p.cantidad * p.precio, 0);
 
   return (
     <Modal show={mostrarModal} onHide={() => setMostrarModal(false)} size="lg">
@@ -27,30 +36,27 @@ const ModalDetallesVenta = ({ mostrarModal, setMostrarModal, detalles }) => {
             </tr>
           </thead>
           <tbody>
-            {detallesSeguros.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="text-center">No hay detalles</td>
-              </tr>
+            {filas.length === 0 ? (
+              <tr><td colSpan={4} className="text-center">No hay productos</td></tr>
             ) : (
-              detallesSeguros.map((d) => (
-                <tr key={d.id_DetalleVenta}>
-                  <td>{d.nombre_producto || 'N/A'}</td>
-                  <td>{d.Cantidad_Producto || 0}</td>
-                  <td>C$ {parseFloat(d.Precio_venta || 0).toFixed(2)}</td>
-                  <td>C$ {((d.Cantidad_Producto || 0) * (d.Precio_venta || 0)).toFixed(2)}</td>
+              filas.map((p, i) => (
+                <tr key={i}>
+                  <td className="fw-medium">{p.nombre}</td>
+                  <td>{p.cantidad}</td>
+                  <td>C$ {Number(p.precio).toFixed(2)}</td>
+                  <td>C$ {(p.cantidad * p.precio).toFixed(2)}</td>
                 </tr>
               ))
             )}
           </tbody>
-
-          {detallesSeguros.length > 0 && (
-            <tfoot>
-              <tr>
-                <td colSpan={3} className="text-end fw-bold">Total:</td>
-                <td className="fw-bold text-danger">C$ {total.toFixed(2)}</td>
-              </tr>
-            </tfoot>
-          )}
+          <tfoot>
+            <tr>
+              <td colSpan={3} className="text-end fw-bold fs-5">Total:</td>
+              <td className="fw-bold text-danger fs-5">
+                C$ {total.toFixed(2)}
+              </td>
+            </tr>
+          </tfoot>
         </Table>
       </Modal.Body>
 

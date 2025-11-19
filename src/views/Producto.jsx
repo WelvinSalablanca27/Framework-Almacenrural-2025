@@ -18,7 +18,7 @@ const Producto = () => {
   const [productosFiltrados, setProductosFiltrados] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [textoBusqueda, setTextoBusqueda] = useState("");
-
+  
 
   const [mostrarModal, setMostrarModal] = useState(false);
   const [nuevoProducto, setNuevoProducto] = useState({
@@ -37,6 +37,7 @@ const Producto = () => {
   const [productoAEliminado, setProductoAEliminado] = useState(null);
 
   const [minimizado, setMinimizado] = useState(false);
+  const [animado, setAnimado] = useState(false);
 
   // -----------------------------
   // CRUD
@@ -57,8 +58,9 @@ const Producto = () => {
 
   useEffect(() => {
     obtenerProductos();
+    // activar animación después de montar
+    setTimeout(() => setAnimado(true), 50);
   }, []);
-
 
   const manejarCambioBusqueda = (e) => {
     const texto = e.target.value.toLowerCase();
@@ -108,7 +110,6 @@ const Producto = () => {
     setMostrarModalEdicion(true);
   };
 
-
   const guardarEdicion = async () => {
     if (!productoEditado?.Nombre_Prod?.trim()) return;
     try {
@@ -129,12 +130,10 @@ const Producto = () => {
     }
   };
 
-
   const abrirModalEliminacion = (producto) => {
     setProductoAEliminado(producto);
     setMostrarModalEliminacion(true);
   };
-
 
   const confirmarEliminacion = async () => {
     try {
@@ -152,9 +151,7 @@ const Producto = () => {
     }
   };
 
-  // -----------------------------
-  // Reporte Excel
-  // -----------------------------
+
   const generarReporteExcel = async () => {
     const workbook = new ExcelJS.Workbook();
     const sheet = workbook.addWorksheet("Productos");
@@ -213,7 +210,7 @@ const Producto = () => {
       >
 
         <div
-          className="position-relative p-4 rounded-4 shadow-lg"
+          className={`position-relative p-4 rounded-4 shadow-lg`}
           style={{
             backgroundColor: "rgba(255, 255, 255, 0.67)",
             maxWidth: "900px",
@@ -221,22 +218,11 @@ const Producto = () => {
             border: "3px solid #28a745",
             borderRadius: "20px",
             backdropFilter: "blur(8px)",
-            transition: "all 0.4s ease",
-            transform: minimizado ? "scale(0)" : "scale(1)",
-            opacity: minimizado ? 0 : 1,
-            pointerEvents: minimizado ? "none" : "all",
+            transition: "all 0.5s ease",
+            transform: animado ? "translateY(0) scale(1)" : "translateY(50px) scale(0.9)",
+            opacity: animado ? 1 : 0,
           }}
         >
-          <Button
-            variant="danger"
-            size="sm"
-            className="position-absolute top-0 end-0 m-2 fw-bold"
-            style={{ zIndex: 10, borderRadius: "50%", width: "36px", height: "36px" }}
-            onClick={() => setMinimizado(true)}
-          >
-            X
-          </Button>
-
           <h4 className="text-center mb-4 fw-bold text-success">Registro de Productos</h4>
 
           <Row className="mb-3 align-items-center">
@@ -252,7 +238,7 @@ const Producto = () => {
                 className="fw-bold px-4 shadow-sm"
                 onClick={() => setMostrarModal(true)}
               >
-                + Nuevo
+                Nuevo
               </Button>
               <Button
                 variant="info"
@@ -272,7 +258,6 @@ const Producto = () => {
               abrirModalEliminacion={abrirModalEliminacion}
             />
           </div>
-
 
           <ModalRegistroProducto
             mostrarModal={mostrarModal}
@@ -299,22 +284,6 @@ const Producto = () => {
           />
         </div>
 
-        {minimizado && (
-          <Button
-            variant="success"
-            className="position-fixed bottom-0 end-0 m-4 shadow-lg"
-            style={{
-              zIndex: 1000,
-              borderRadius: "50%",
-              width: "60px",
-              height: "60px",
-              fontSize: "24px",
-            }}
-            onClick={() => setMinimizado(false)}
-          >
-            +
-          </Button>
-        )}
       </Container>
     </div>
   );

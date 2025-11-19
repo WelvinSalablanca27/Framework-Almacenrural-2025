@@ -40,7 +40,9 @@ const Proveedor = () => {
     const [mostrarModalEliminacion, setMostrarModalEliminacion] = useState(false);
     const [proveedorAEliminar, setProveedorAEliminar] = useState(null);
 
+    // =========================
     // OBTENER PROVEEDORES
+    // =========================
     const obtenerProveedores = async () => {
         try {
             const respuesta = await fetch("http://localhost:3001/api/proveedores");
@@ -58,7 +60,9 @@ const Proveedor = () => {
         obtenerProveedores();
     }, []);
 
-    // BUSCAR
+    // =========================
+    // BUSCAR PROVEEDORES
+    // =========================
     const manejarCambioBusqueda = (e) => {
         const texto = e.target.value.toLowerCase();
         setTextoBusqueda(texto);
@@ -70,7 +74,9 @@ const Proveedor = () => {
         setProveedoresFiltrados(filtrados);
     };
 
-    // AGREGAR
+    // =========================
+    // AGREGAR PROVEEDOR
+    // =========================
     const manejarCambioInput = (e) => {
         const { name, value } = e.target;
         setNuevoProveedor((prev) => ({ ...prev, [name]: value }));
@@ -84,7 +90,6 @@ const Proveedor = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(nuevoProveedor),
             });
-
             setNuevoProveedor({
                 Nombre_Proveedor: "",
                 Telefono: "",
@@ -101,7 +106,9 @@ const Proveedor = () => {
         }
     };
 
-    // EDITAR
+    // =========================
+    // EDITAR PROVEEDOR
+    // =========================
     const abrirModalEdicion = (proveedor) => {
         setProveedorEditado({ ...proveedor });
         setMostrarModalEdicion(true);
@@ -117,7 +124,6 @@ const Proveedor = () => {
                     body: JSON.stringify(proveedorEditado),
                 }
             );
-
             setMostrarModalEdicion(false);
             obtenerProveedores();
         } catch (error) {
@@ -125,7 +131,9 @@ const Proveedor = () => {
         }
     };
 
-    // ELIMINAR
+    // =========================
+    // ELIMINAR PROVEEDOR
+    // =========================
     const abrirModalEliminacion = (proveedor) => {
         setProveedorAEliminar(proveedor);
         setMostrarModalEliminacion(true);
@@ -137,7 +145,6 @@ const Proveedor = () => {
                 `http://localhost:3001/api/eliminarProveedor/${proveedorAEliminar.id_Proveedor}`,
                 { method: "DELETE" }
             );
-
             setMostrarModalEliminacion(false);
             obtenerProveedores();
         } catch (error) {
@@ -145,13 +152,105 @@ const Proveedor = () => {
         }
     };
 
-    // EXCEL / PDF
-    const generarReporteExcel = async () => {
-        // ...mismo código de ExcelJS que ya tienes
+    // =========================
+    // REPORTE PDF
+    // =========================
+    const generarReportePDF = () => {
+        const doc = new jsPDF();
+        doc.setFontSize(16);
+        doc.text("Reporte de Proveedores", 105, 15, null, null, "center");
+
+        const columnas = [
+            "ID",
+            "Nombre",
+            "Teléfono",
+            "Email",
+            "Dirección",
+            "Distribuidor",
+            "Pago",
+            "Estado",
+        ];
+
+        const filas = proveedoresFiltrados.map((p) => [
+            p.id_Proveedor,
+            p.Nombre_Proveedor,
+            p.Telefono,
+            p.Email,
+            p.Direccion,
+            p.Tipo_Distribuidor,
+            p.Condiciones_Pago,
+            p.Estado,
+        ]);
+
+        doc.autoTable({
+            head: [columnas],
+            body: filas,
+            startY: 25,
+        });
+
+        doc.save("reporte_proveedores.pdf");
     };
 
-    const generarReportePDF = () => {
-        // ...mismo código de jsPDF que ya tienes
+    // =========================
+    // REPORTE EXCEL (con título centrado)
+    // =========================
+    const generarReporteExcel = async () => {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("Proveedores");
+
+        // Título centrado y negrita
+        worksheet.mergeCells("A1:H1");
+        const titulo = worksheet.getCell("A1");
+        titulo.value = "Reporte de Proveedores - Almacén Rural";
+        titulo.font = { size: 16, bold: true };
+        titulo.alignment = { horizontal: "center" };
+
+        // Espacio
+        worksheet.addRow([]);
+
+        // Encabezados
+        const encabezados = [
+            "ID",
+            "Nombre",
+            "Teléfono",
+            "Email",
+            "Dirección",
+            "Distribuidor",
+            "Condiciones Pago",
+            "Estado",
+        ];
+
+        const headerRow = worksheet.addRow(encabezados);
+        headerRow.eachCell((cell) => {
+            cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+            cell.fill = {
+                type: "pattern",
+                pattern: "solid",
+                fgColor: { argb: "FF198754" },
+            };
+            cell.alignment = { horizontal: "center" };
+        });
+
+        // Contenido
+        proveedoresFiltrados.forEach((p) => {
+            worksheet.addRow([
+                p.id_Proveedor,
+                p.Nombre_Proveedor,
+                p.Telefono,
+                p.Email,
+                p.Direccion,
+                p.Tipo_Distribuidor,
+                p.Condiciones_Pago,
+                p.Estado,
+            ]);
+        });
+
+        worksheet.columns.forEach((col) => {
+            col.width = 20;
+        });
+
+        const buffer = await workbook.xlsx.writeBuffer();
+        saveAs(new Blob([buffer]), "reporte_proveedores.xlsx");
     };
 
     return (
@@ -174,7 +273,6 @@ const Proveedor = () => {
                 className="d-flex justify-content-center align-items-center"
                 style={{ minHeight: "100vh" }}
             >
-                {/* TARJETA CON TABLA */}
                 <Card
                     className="shadow-lg p-3 rounded-4 position-relative animate-fade-in-smooth"
                     style={{
@@ -239,7 +337,6 @@ const Proveedor = () => {
                         />
                     </div>
 
-                    {/* MODALES */}
                     <ModalRegistroProveedor
                         mostrarModal={mostrarModal}
                         setMostrarModal={setMostrarModal}
@@ -247,7 +344,6 @@ const Proveedor = () => {
                         setNuevoProveedor={setNuevoProveedor}
                         manejarCambioInput={manejarCambioInput}
                         agregarProveedor={agregarProveedor}
-                        listaProveedores={proveedores}
                     />
 
                     <ModalEdicionProveedor
