@@ -85,7 +85,7 @@ const Usuario = () => {
   const agregarUsuario = async () => {
     if (!nuevoUsuario.nombre.trim()) return;
     try {
-      const res = await fetch("http://localhost:3001/api/registrarUsuario", {
+      const res = await fetch("http://localhost:3001/api/registrarusuario", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(nuevoUsuario),
