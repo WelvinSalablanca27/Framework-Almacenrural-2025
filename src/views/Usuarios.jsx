@@ -85,7 +85,7 @@ const Usuario = () => {
   const agregarUsuario = async () => {
     if (!nuevoUsuario.nombre.trim()) return;
     try {
-      const res = await fetch("http://localhost:3001/api/registrarusuario", {
+      const res = await fetch( `http://localhost:3001/api/registrarusuarios `, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(nuevoUsuario),
@@ -105,7 +105,7 @@ const Usuario = () => {
       await obtenerUsuarios();
       setPaginaActual(1);
     } catch (error) {
-      console.error(error);
+      console.error( error);
       alert("No se pudo guardar el usuario.");
     }
   };
@@ -119,7 +119,7 @@ const Usuario = () => {
     if (!usuarioEditado?.nombre?.trim()) return;
     try {
       const res = await fetch(
-        `http://localhost:3001/api/actualizarUsuarioPatch/${usuarioEditado.id}`,
+        `http://localhost:3001/api/actualizarUsuario/${usuarioEditado.id}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
